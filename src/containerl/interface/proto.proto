@@ -1,0 +1,80 @@
+syntax = "proto3";
+
+package containerl;
+
+enum EnvironmentType {
+  STANDARD = 0;
+  VECTORIZED = 1;
+}
+
+service EnvironmentService {
+  rpc Init (InitRequest) returns (SpacesResponse) {}
+  rpc Reset (ResetRequest) returns (ResetResponse) {}
+  rpc Step (StepRequest) returns (StepResponse) {}
+  rpc Render (Empty) returns (RenderResponse) {}
+  rpc Close (Empty) returns (Empty) {}
+}
+
+service AgentService {
+  rpc GetSpaces (Empty) returns (SpacesResponse) {}
+  rpc GetAction (ObservationRequest) returns (ActionResponse) {}
+}
+
+message Empty {}
+
+message ObservationRequest {
+  bytes observation = 1;
+}
+
+message ActionResponse {
+  bytes action = 1;
+}
+
+message InitRequest {
+  optional string render_mode = 1;
+  optional bytes init_args = 2;
+}
+
+message ResetRequest {
+  optional int64 seed = 1;
+  optional bytes options = 2;
+}
+
+message StepRequest {
+  bytes action = 1;
+}
+
+message ResetResponse {
+  bytes observation = 1;
+  bytes info = 2;
+}
+
+message StepResponse {
+  bytes observation = 1;
+  bytes reward = 2;
+  bytes terminated = 3;
+  bytes truncated = 4;
+  bytes info = 5;
+}
+
+message RenderResponse {
+  bytes render_data = 1;
+}
+
+message Space {
+  string type = 1;  // e.g., "Discrete", "Box", "MultiBinary", "MultiDiscrete"
+  repeated double low = 2;
+  repeated double high = 3;
+  optional int32 n = 4;
+  repeated int32 nvec = 5;
+  repeated int32 shape = 6;
+  string dtype = 7;
+}
+
+message SpacesResponse {
+  map<string, Space> observation_space = 1;
+  Space action_space = 2;
+  int32 num_envs = 3;
+  EnvironmentType environment_type = 4;
+  string render_mode = 5;
+}
