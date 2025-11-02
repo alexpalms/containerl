@@ -1,12 +1,16 @@
-import numpy as np
-from gymnasium import spaces
-from google.protobuf import json_format
-import json
-from containerl.interface import Space, EnvironmentType
-import gymnasium as gym
+"""Utility functions for converting between Gymnasium spaces and protobuf representations."""
 
-def numpy_to_native_space(space, space_proto):
-    """Helper method to set space information based on space type."""
+import json
+
+import numpy as np
+from google.protobuf import json_format
+from gymnasium import spaces
+
+from containerl.interface import EnvironmentType, Space
+
+
+def numpy_to_native_space(space, space_proto) -> None:
+    """Set space information based on space type."""
     if isinstance(space, spaces.Box):
         space_proto.type = "Box"
         space_proto.low.extend(space.low.flatten().tolist())
@@ -30,8 +34,11 @@ def numpy_to_native_space(space, space_proto):
         space_proto.dtype = str(space.dtype)
     else:
         # Raise an error for unsupported space types
-        raise ValueError(f"Unsupported space type: {type(space).__name__}. "
-                            f"Only Box, Discrete, MultiDiscrete, and MultiBinary spaces are supported.")
+        raise ValueError(
+            f"Unsupported space type: {type(space).__name__}. "
+            f"Only Box, Discrete, MultiDiscrete, and MultiBinary spaces are supported."
+        )
+
 
 def native_to_numpy_space(proto_space):
     """Create a Gym action space from the protobuf space definition."""
@@ -58,11 +65,13 @@ def native_to_numpy_space(proto_space):
     else:
         raise ValueError(f"Unsupported space type: {proto_space.type}")
 
+
 def space_proto_to_json(space_proto):
     """Convert a Space protobuf message to JSON dictionary."""
     json_str = json_format.MessageToJson(space_proto)
     json_dict = json.loads(json_str)
     return json_dict
+
 
 def json_to_space_proto(json_dict):
     """Convert JSON dictionary back to a Space protobuf message."""
@@ -71,7 +80,12 @@ def json_to_space_proto(json_dict):
     json_format.Parse(json_str, space_proto)
     return space_proto
 
-def generate_spaces_info_from_gym_spaces(observation_space: dict, action_space: dict, environment_type: EnvironmentType = None):
+
+def generate_spaces_info_from_gym_spaces(
+    observation_space: dict,
+    action_space: dict,
+    environment_type: EnvironmentType = None,
+):
     observation_space_info = {}
     for key in sorted(observation_space.keys()):
         value = observation_space[key]
@@ -88,10 +102,11 @@ def generate_spaces_info_from_gym_spaces(observation_space: dict, action_space: 
     results = {
         "observationSpaceInfo": observation_space_info,
         "actionSpaceInfo": action_space_info,
-        "environmentType": environment_type
+        "environmentType": environment_type,
     }
 
     return results
+
 
 def numpy_to_native(obj, space):
     """Convert numpy arrays and other non-serializable objects to serializable types
@@ -106,6 +121,7 @@ def numpy_to_native(obj, space):
         return obj.item()
     else:
         return obj.tolist()
+
 
 def native_to_numpy(obj, space):
     """Convert serialized objects back to their original form based on space.
@@ -122,6 +138,7 @@ def native_to_numpy(obj, space):
         return np.array(obj, dtype=np.int64).reshape(space.shape)
     elif isinstance(space, spaces.MultiBinary):
         return np.array(obj, dtype=np.int8).reshape(space.shape)
+
 
 def native_to_numpy_vec(obj, space, num_envs):
     """Convert serialized objects back to their original form based on space.

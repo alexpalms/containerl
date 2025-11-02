@@ -39,6 +39,8 @@ dev = [
     "ruff>=0.12.12",
     "twine>=6.2.0",
 ]
+
+
 docs = [
     "furo>=2025.7.19",
     "myst-parser>=4.0.1",
@@ -46,19 +48,23 @@ docs = [
     "sphinx-autobuild>=2025.8.25",
     "sphinx-autodoc-typehints>=3.2.0",
 ]
+examples = [
+    "anylogic-alpyne",
+    "gymnasium==0.29.1",
+]
 
 [project.urls]
-Homepage = "https://github.com/alexpalms/python-project-template"
-Issues = "https://github.com/alexpalms/python-project-template/issues"
+Homepage = "https://github.com/alexpalms/containerl"
+Issues = "https://github.com/alexpalms/containerl/issues"
 
 [tool.setuptools]
 include-package-data = true
 
 [tool.setuptools.package-data]
-project_name = ["py.typed", "data/*"]
+containerl = ["py.typed", "data/*"]
 
 [project.scripts]
-project-name-cli = "project_name.cli:main"
+containerl-cli = "containerl.cli:main"
 
 [tool.pyright]
 include = ["src", "examples", "tests", "docs"]

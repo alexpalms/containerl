@@ -1,14 +1,20 @@
-import msgpack
-import grpc
-import requests
+"""Client for connecting to a remote agent via gRPC."""
 
+import logging
+
+import grpc
+import msgpack
 from gymnasium import Env, spaces
 from gymnasium.core import ActType, ObsType
-import gymnasium as gym
 
 # Add the interface directory to the path to import the generated gRPC code
-from containerl.interface import Empty, ObservationRequest, AgentServiceStub
-from containerl.interface.utils import native_to_numpy, numpy_to_native, native_to_numpy_space
+from containerl.interface import AgentServiceStub, Empty, ObservationRequest
+from containerl.interface.utils import (
+    native_to_numpy,
+    native_to_numpy_space,
+    numpy_to_native,
+)
+
 
 class AgentClient(Env):
     """
@@ -26,7 +32,9 @@ class AgentClient(Env):
             grpc.channel_ready_future(self.channel).result(timeout=timeout)
         except grpc.FutureTimeoutError:
             self.channel.close()
-            raise TimeoutError(f"Could not connect to server at {server_address} within {timeout} seconds")
+            raise TimeoutError(
+                f"Could not connect to server at {server_address} within {timeout} seconds"
+            )
 
         self.stub = AgentServiceStub(self.channel)
 
@@ -50,8 +58,12 @@ class AgentClient(Env):
         # Convert numpy arrays to lists for serialization
         serializable_observation = {}
         for key, value in observation.items():
-            serializable_observation[key] = numpy_to_native(value, self.observation_space[key])
-        observation_request = ObservationRequest(observation=msgpack.packb(serializable_observation, use_bin_type=True))
+            serializable_observation[key] = numpy_to_native(
+                value, self.observation_space[key]
+            )
+        observation_request = ObservationRequest(
+            observation=msgpack.packb(serializable_observation, use_bin_type=True)
+        )
 
         # Call the GetAction method
         action_response = self.stub.GetAction(observation_request)
@@ -65,7 +77,9 @@ class AgentClient(Env):
     def get_action_serve(self, observation: ObsType) -> ActType:
         """Get an action from the agent."""
         # Convert numpy arrays to lists for serialization
-        observation_request = ObservationRequest(observation=msgpack.packb(observation, use_bin_type=True))
+        observation_request = ObservationRequest(
+            observation=msgpack.packb(observation, use_bin_type=True)
+        )
 
         # Call the GetAction method
         action_response = self.stub.GetAction(observation_request)
@@ -74,7 +88,8 @@ class AgentClient(Env):
         action = msgpack.unpackb(action_response.action, raw=False)
         return action
 
-def main(server_address: str = "localhost:50051", num_steps: int = 5):
+
+def main(server_address: str = "localhost:50051", num_steps: int = 5) -> None:
     """
     Run a simple test of the EnvironmentClient.
 
@@ -82,25 +97,29 @@ def main(server_address: str = "localhost:50051", num_steps: int = 5):
         server_address: The address of the server (e.g., "localhost:50051")
         num_steps: Number of steps to run in the test
     """
+    logger = logging.getLogger(__name__)
     try:
         # Create a remote agent
         agent = AgentClient(server_address)
 
         # Run a few steps
-        for i in range(num_steps):
+        for _ in range(num_steps):
             obs = agent.observation_space.sample()
             action = agent.get_action(obs)
-            assert agent.action_space.contains(action), f"Action {action} not in action space {agent.action_space}"
+            if not agent.action_space.contains(action):
+                logger.error(
+                    f"Action {action} not in action space {agent.action_space}"
+                )
 
-            print(f"Observation: {obs}")
-            print(f"Action: {action}")
+            logger.info(f"Observation: {obs}")
+            logger.info(f"Action: {action}")
 
         # Print success message if no errors occurred
-        print("\nSuccess! The agent client is working correctly.")
+        logger.info("\nSuccess! The agent client is working correctly.")
 
     except Exception as e:
-        print(f"\nError: {e}")
-        print("Failed to connect to or interact with the agent server.")
+        logger.info(f"\nError: {e}")
+        logger.info("Failed to connect to or interact with the agent server.")
         raise
 
 
@@ -109,10 +128,17 @@ if __name__ == "__main__":
     import argparse
 
     parser = argparse.ArgumentParser(description="Test the AgentClient")
-    parser.add_argument("--address", default="localhost:50051",
-                        help="AServer address (default: localhost:50051)")
-    parser.add_argument("--steps", type=int, default=5,
-                        help="Number of steps to run in the test (default: 5)")
+    parser.add_argument(
+        "--address",
+        default="localhost:50051",
+        help="AServer address (default: localhost:50051)",
+    )
+    parser.add_argument(
+        "--steps",
+        type=int,
+        default=5,
+        help="Number of steps to run in the test (default: 5)",
+    )
 
     args = parser.parse_args()
 
@@ -120,4 +146,5 @@ if __name__ == "__main__":
         main(args.address, args.steps)
     except Exception:
         import sys
+
         sys.exit(1)

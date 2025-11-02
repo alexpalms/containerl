@@ -1,9 +1,11 @@
-from google.protobuf.internal import containers as _containers
-from google.protobuf.internal import enum_type_wrapper as _enum_type_wrapper
+from collections.abc import Iterable as _Iterable
+from collections.abc import Mapping as _Mapping
+from typing import ClassVar as _ClassVar
+
 from google.protobuf import descriptor as _descriptor
 from google.protobuf import message as _message
-from collections.abc import Iterable as _Iterable, Mapping as _Mapping
-from typing import ClassVar as _ClassVar, Optional as _Optional, Union as _Union
+from google.protobuf.internal import containers as _containers
+from google.protobuf.internal import enum_type_wrapper as _enum_type_wrapper
 
 DESCRIPTOR: _descriptor.FileDescriptor
 
@@ -11,6 +13,7 @@ class EnvironmentType(int, metaclass=_enum_type_wrapper.EnumTypeWrapper):
     __slots__ = ()
     STANDARD: _ClassVar[EnvironmentType]
     VECTORIZED: _ClassVar[EnvironmentType]
+
 STANDARD: EnvironmentType
 VECTORIZED: EnvironmentType
 
@@ -22,13 +25,13 @@ class ObservationRequest(_message.Message):
     __slots__ = ("observation",)
     OBSERVATION_FIELD_NUMBER: _ClassVar[int]
     observation: bytes
-    def __init__(self, observation: _Optional[bytes] = ...) -> None: ...
+    def __init__(self, observation: bytes | None = ...) -> None: ...
 
 class ActionResponse(_message.Message):
     __slots__ = ("action",)
     ACTION_FIELD_NUMBER: _ClassVar[int]
     action: bytes
-    def __init__(self, action: _Optional[bytes] = ...) -> None: ...
+    def __init__(self, action: bytes | None = ...) -> None: ...
 
 class InitRequest(_message.Message):
     __slots__ = ("render_mode", "init_args")
@@ -36,7 +39,9 @@ class InitRequest(_message.Message):
     INIT_ARGS_FIELD_NUMBER: _ClassVar[int]
     render_mode: str
     init_args: bytes
-    def __init__(self, render_mode: _Optional[str] = ..., init_args: _Optional[bytes] = ...) -> None: ...
+    def __init__(
+        self, render_mode: str | None = ..., init_args: bytes | None = ...
+    ) -> None: ...
 
 class ResetRequest(_message.Message):
     __slots__ = ("seed", "options")
@@ -44,13 +49,13 @@ class ResetRequest(_message.Message):
     OPTIONS_FIELD_NUMBER: _ClassVar[int]
     seed: int
     options: bytes
-    def __init__(self, seed: _Optional[int] = ..., options: _Optional[bytes] = ...) -> None: ...
+    def __init__(self, seed: int | None = ..., options: bytes | None = ...) -> None: ...
 
 class StepRequest(_message.Message):
     __slots__ = ("action",)
     ACTION_FIELD_NUMBER: _ClassVar[int]
     action: bytes
-    def __init__(self, action: _Optional[bytes] = ...) -> None: ...
+    def __init__(self, action: bytes | None = ...) -> None: ...
 
 class ResetResponse(_message.Message):
     __slots__ = ("observation", "info")
@@ -58,7 +63,9 @@ class ResetResponse(_message.Message):
     INFO_FIELD_NUMBER: _ClassVar[int]
     observation: bytes
     info: bytes
-    def __init__(self, observation: _Optional[bytes] = ..., info: _Optional[bytes] = ...) -> None: ...
+    def __init__(
+        self, observation: bytes | None = ..., info: bytes | None = ...
+    ) -> None: ...
 
 class StepResponse(_message.Message):
     __slots__ = ("observation", "reward", "terminated", "truncated", "info")
@@ -72,13 +79,20 @@ class StepResponse(_message.Message):
     terminated: bytes
     truncated: bytes
     info: bytes
-    def __init__(self, observation: _Optional[bytes] = ..., reward: _Optional[bytes] = ..., terminated: _Optional[bytes] = ..., truncated: _Optional[bytes] = ..., info: _Optional[bytes] = ...) -> None: ...
+    def __init__(
+        self,
+        observation: bytes | None = ...,
+        reward: bytes | None = ...,
+        terminated: bytes | None = ...,
+        truncated: bytes | None = ...,
+        info: bytes | None = ...,
+    ) -> None: ...
 
 class RenderResponse(_message.Message):
     __slots__ = ("render_data",)
     RENDER_DATA_FIELD_NUMBER: _ClassVar[int]
     render_data: bytes
-    def __init__(self, render_data: _Optional[bytes] = ...) -> None: ...
+    def __init__(self, render_data: bytes | None = ...) -> None: ...
 
 class Space(_message.Message):
     __slots__ = ("type", "low", "high", "n", "nvec", "shape", "dtype")
@@ -96,17 +110,35 @@ class Space(_message.Message):
     nvec: _containers.RepeatedScalarFieldContainer[int]
     shape: _containers.RepeatedScalarFieldContainer[int]
     dtype: str
-    def __init__(self, type: _Optional[str] = ..., low: _Optional[_Iterable[float]] = ..., high: _Optional[_Iterable[float]] = ..., n: _Optional[int] = ..., nvec: _Optional[_Iterable[int]] = ..., shape: _Optional[_Iterable[int]] = ..., dtype: _Optional[str] = ...) -> None: ...
+    def __init__(
+        self,
+        type: str | None = ...,
+        low: _Iterable[float] | None = ...,
+        high: _Iterable[float] | None = ...,
+        n: int | None = ...,
+        nvec: _Iterable[int] | None = ...,
+        shape: _Iterable[int] | None = ...,
+        dtype: str | None = ...,
+    ) -> None: ...
 
 class SpacesResponse(_message.Message):
-    __slots__ = ("observation_space", "action_space", "num_envs", "environment_type", "render_mode")
+    __slots__ = (
+        "observation_space",
+        "action_space",
+        "num_envs",
+        "environment_type",
+        "render_mode",
+    )
     class ObservationSpaceEntry(_message.Message):
         __slots__ = ("key", "value")
         KEY_FIELD_NUMBER: _ClassVar[int]
         VALUE_FIELD_NUMBER: _ClassVar[int]
         key: str
         value: Space
-        def __init__(self, key: _Optional[str] = ..., value: _Optional[_Union[Space, _Mapping]] = ...) -> None: ...
+        def __init__(
+            self, key: str | None = ..., value: Space | _Mapping | None = ...
+        ) -> None: ...
+
     OBSERVATION_SPACE_FIELD_NUMBER: _ClassVar[int]
     ACTION_SPACE_FIELD_NUMBER: _ClassVar[int]
     NUM_ENVS_FIELD_NUMBER: _ClassVar[int]
@@ -117,4 +149,11 @@ class SpacesResponse(_message.Message):
     num_envs: int
     environment_type: EnvironmentType
     render_mode: str
-    def __init__(self, observation_space: _Optional[_Mapping[str, Space]] = ..., action_space: _Optional[_Union[Space, _Mapping]] = ..., num_envs: _Optional[int] = ..., environment_type: _Optional[_Union[EnvironmentType, str]] = ..., render_mode: _Optional[str] = ...) -> None: ...
+    def __init__(
+        self,
+        observation_space: _Mapping[str, Space] | None = ...,
+        action_space: Space | _Mapping | None = ...,
+        num_envs: int | None = ...,
+        environment_type: EnvironmentType | str | None = ...,
+        render_mode: str | None = ...,
+    ) -> None: ...
