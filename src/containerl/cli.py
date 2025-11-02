@@ -3,10 +3,39 @@
 import argparse
 import logging
 import os
+import re
+import shutil
 import subprocess
 import sys
 import time
 import uuid
+
+
+def is_valid_docker_image_name(name: str) -> bool:
+    """
+    Validate if a string is a valid Docker image name.
+
+    Args:
+        name: The image name to validate
+
+    Returns
+    -------
+        bool: True if valid, False otherwise
+
+    Valid format examples:
+    - simple name: containerl-test
+    - name with tag: containerl-test:latest
+    - with registry: registry.example.com/containerl-test:1.0
+    """
+    # Basic pattern for docker image names
+    pattern = r"""
+        ^(?:
+            (?:[a-zA-Z0-9](?:[a-zA-Z0-9-._])*/?)*  # Registry and repository name
+            [a-zA-Z0-9][a-zA-Z0-9-._]*              # Image name
+        )
+        (?::[a-zA-Z0-9][-a-zA-Z0-9_.]*)?$          # Optional tag
+    """
+    return bool(re.match(pattern, name, re.VERBOSE))
 
 
 def build_docker_image(
@@ -31,6 +60,11 @@ def build_docker_image(
         The ID of the built image
     """
     logger = logging.getLogger(__name__)
+
+    docker_path = shutil.which("docker")
+    if docker_path is None:
+        logger.error("Docker executable not found in PATH. Please install Docker.")
+        sys.exit(1)
 
     # Check if path is a file (specific Dockerfile) or directory
     if os.path.isfile(path):
@@ -57,14 +91,14 @@ def build_docker_image(
     # Use provided context or default to current directory
     build_context = os.path.abspath(context) if context else "."
 
-    cmd = ["docker", "build", "-f", dockerfile, "-t", image_name, build_context]
+    cmd = [docker_path, "build", "-f", dockerfile, "-t", image_name, build_context]
 
     logger.info(f"Building Docker image with command: {' '.join(cmd)}")
 
     try:
         if verbose:
             # Use Popen to stream output in real-time when verbose is enabled
-            process = subprocess.Popen(
+            process = subprocess.Popen(  # noqa: S603
                 cmd,
                 stdout=subprocess.PIPE,
                 stderr=subprocess.STDOUT,
@@ -73,6 +107,9 @@ def build_docker_image(
             )
 
             # Stream the build logs
+            if process.stdout is None:
+                raise RuntimeError("Failed to capture Docker build output")
+
             for line in process.stdout:
                 logger.info(line)
 
@@ -85,7 +122,7 @@ def build_docker_image(
         else:
             # Use run with minimal output when not verbose
             logger.info("Building Docker image... (use --verbose for detailed logs)")
-            result = subprocess.run(cmd, check=False, capture_output=True, text=True)
+            result = subprocess.run(cmd, check=False, capture_output=True, text=True)  # noqa: S603
             if result.returncode != 0:
                 logger.error(f"Error building Docker image: {result.stderr}")
                 sys.exit(1)
@@ -122,7 +159,15 @@ def run_docker_container(
     """
     logger = logging.getLogger(__name__)
 
-    cmd = ["docker", "run", "--rm"]
+    docker_path = shutil.which("docker")
+    if docker_path is None:
+        logger.error("Docker executable not found in PATH. Please install Docker.")
+        sys.exit(1)
+
+    if not is_valid_docker_image_name(image):
+        raise ValueError(f"Invalid Docker image name: {image}")
+
+    cmd = [docker_path, "run", "--rm"]
 
     # Add -it for interactive mode
     if interactive_bash:
@@ -161,10 +206,10 @@ def run_docker_container(
             logger.info(
                 f"Starting interactive bash session in container from image: {image}"
             )
-            subprocess.call(cmd)
+            subprocess.call(cmd)  # noqa: S603
         elif attach:
             # Using subprocess.Popen with stdout/stderr streaming to console
-            process = subprocess.Popen(
+            process = subprocess.Popen(  # noqa: S603
                 cmd,
                 stdout=subprocess.PIPE,
                 stderr=subprocess.STDOUT,
@@ -175,6 +220,9 @@ def run_docker_container(
             logger.info(f"Running container from image: {image}")
             logger.info(f"Command: {' '.join(cmd)}")
             logger.info("Container logs:")
+
+            if process.stdout is None:
+                raise RuntimeError("Failed to capture Docker container output")
 
             # Stream the output
             for line in process.stdout:
@@ -188,7 +236,7 @@ def run_docker_container(
             # Detached mode
             logger.info(f"Starting container in detached mode from image: {image}")
             logger.info(f"Command: {' '.join(cmd)}")
-            result = subprocess.run(cmd, check=False, capture_output=True, text=True)
+            result = subprocess.run(cmd, check=False, capture_output=True, text=True)  # noqa: S603
             if result.returncode != 0:
                 logger.error(f"Error starting container: {result.stderr}")
                 logger.error(f"Error: {result.stderr}")
@@ -252,11 +300,20 @@ def stop_container(image: str) -> None:
     """
     logger = logging.getLogger(__name__)
 
+    if not is_valid_docker_image_name(image):
+        raise ValueError(f"Invalid Docker image name: {image}")
+
     try:
+        # Get full path to docker executable
+        docker_path = shutil.which("docker")
+        if docker_path is None:
+            logger.error("Docker executable not found in PATH. Please install Docker.")
+            sys.exit(1)
+
         # Get all container IDs running the specified image
         container_ids = (
-            subprocess.run(
-                ["docker", "ps", "-q", "--filter", f"ancestor={image}"],
+            subprocess.run(  # noqa: S603
+                [docker_path, "ps", "-q", "--filter", f"ancestor={image}"],
                 capture_output=True,
                 text=True,
                 check=True,
@@ -275,7 +332,7 @@ def stop_container(image: str) -> None:
         logger.info(f"Found {len(container_ids)} container(s) running image {image}")
         for container_id in container_ids:
             try:
-                subprocess.run(["docker", "rm", "-f", container_id], check=True)
+                subprocess.run([docker_path, "rm", "-f", container_id], check=True)  # noqa: S603
                 logger.info(f"Container {container_id} stopped successfully")
             except subprocess.CalledProcessError as e:
                 logger.error(f"Failed to stop container {container_id}: {e}")
@@ -374,6 +431,12 @@ def build_run_test(
     """
     logger = logging.getLogger(__name__)
     try:
+        # Get full path to docker executable
+        docker_path = shutil.which("docker")
+        if docker_path is None:
+            logger.error("Docker executable not found in PATH. Please install Docker.")
+            sys.exit(1)
+
         image = build_run(
             path,
             name,
@@ -395,15 +458,15 @@ def build_run_test(
         # Stop the container after testing
         logger.info("\n=== Cleaning up: Stopping container ===")
         try:
-            container_id = subprocess.run(
-                ["docker", "ps", "-q", "--filter", f"ancestor={image}"],
+            container_id = subprocess.run(  # noqa: S603
+                [docker_path, "ps", "-q", "--filter", f"ancestor={image}"],
                 capture_output=True,
                 text=True,
                 check=True,
             ).stdout.strip()
 
             if container_id:
-                subprocess.run(["docker", "stop", container_id], check=True)
+                subprocess.run([docker_path, "stop", container_id], check=True)  # noqa: S603
                 logger.info(f"Container {container_id} stopped successfully")
         except subprocess.CalledProcessError as e:
             logger.error(f"Warning: Failed to stop container: {e}")
@@ -418,9 +481,20 @@ def remove_containerl_images() -> None:
     logger = logging.getLogger(__name__)
 
     try:
+        docker_path = shutil.which("docker")
+        if docker_path is None:
+            logger.error("Docker executable not found in PATH. Please install Docker.")
+            sys.exit(1)
+
         # List all images that start with 'containerl-'
-        result = subprocess.run(
-            ["docker", "images", "--format", "{{.Repository}}", "containerl-*"],
+        result = subprocess.run(  # noqa: S603
+            [
+                docker_path,
+                "images",
+                "--format",
+                "{{.Repository}}",
+                "containerl-*",
+            ],
             capture_output=True,
             text=True,
             check=True,
@@ -435,7 +509,9 @@ def remove_containerl_images() -> None:
         logger.info(f"Found {len(images)} containerl images. Removing...")
         for image in images:
             try:
-                subprocess.run(["docker", "rmi", "-f", image], check=True)
+                if not is_valid_docker_image_name(image):
+                    raise ValueError(f"Invalid Docker image name: {image}")
+                subprocess.run([docker_path, "rmi", "-f", image], check=True)  # noqa: S603
                 logger.info(f"Successfully removed image: {image}")
             except subprocess.CalledProcessError as e:
                 logger.error(f"Failed to remove image {image}: {e}")
