@@ -7,8 +7,10 @@ import msgpack
 from gymnasium import Env, spaces
 from gymnasium.core import ActType, ObsType
 
+from containerl.interface.proto_pb2 import Empty, ObservationRequest
+
 # Add the interface directory to the path to import the generated gRPC code
-from containerl.interface import AgentServiceStub, Empty, ObservationRequest
+from containerl.interface.proto_pb2_grpc import AgentServiceStub
 from containerl.interface.utils import (
     native_to_numpy,
     native_to_numpy_space,

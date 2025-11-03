@@ -2,7 +2,8 @@
 """Client and server classes corresponding to protobuf-defined services."""
 
 import grpc
-import proto_pb2 as proto__pb2
+
+# import containerl.interface.proto_pb2 as proto__pb2
 
 GRPC_GENERATED_VERSION = "1.74.0"
 GRPC_VERSION = grpc.__version__

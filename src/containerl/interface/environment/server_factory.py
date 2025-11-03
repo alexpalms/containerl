@@ -10,14 +10,16 @@ import gymnasium as gym
 import msgpack
 import numpy as np
 
-from containerl.interface import (
+from containerl.interface.proto_pb2 import (
     Empty,
-    EnvironmentService,
     EnvironmentType,
     RenderResponse,
     ResetResponse,
     SpacesResponse,
     StepResponse,
+)
+from containerl.interface.proto_pb2_grpc import (
+    EnvironmentService,
     add_EnvironmentServiceServicer_to_server,
 )
 from containerl.interface.utils import (

@@ -6,7 +6,7 @@ import numpy as np
 from google.protobuf import json_format
 from gymnasium import spaces
 
-from containerl.interface import EnvironmentType, Space
+from containerl.interface.proto_pb2 import EnvironmentType, Space
 
 
 def numpy_to_native_space(space, space_proto) -> None:

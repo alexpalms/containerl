@@ -9,10 +9,9 @@ import grpc
 import gymnasium as gym
 import msgpack
 
-from containerl.interface import (
-    ActionResponse,
+from containerl.interface.proto_pb2 import ActionResponse, SpacesResponse
+from containerl.interface.proto_pb2_grpc import (
     AgentService,
-    SpacesResponse,
     add_AgentServiceServicer_to_server,
 )
 from containerl.interface.utils import (

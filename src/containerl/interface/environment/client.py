@@ -10,14 +10,14 @@ from gymnasium import Env, spaces
 from gymnasium.core import ActType, ObsType, RenderFrame
 
 # Add the interface directory to the path to import the generated gRPC code
-from containerl.interface import (
+from containerl.interface.proto_pb2 import (
     Empty,
-    EnvironmentServiceStub,
     EnvironmentType,
     InitRequest,
     ResetRequest,
     StepRequest,
 )
+from containerl.interface.proto_pb2_grpc import EnvironmentServiceStub
 from containerl.interface.utils import (
     native_to_numpy,
     native_to_numpy_space,
