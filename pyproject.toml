@@ -40,17 +40,12 @@ dev = [
     "twine>=6.2.0",
 ]
 
-
 docs = [
     "furo>=2025.7.19",
     "myst-parser>=4.0.1",
     "sphinx>=8.2.3",
     "sphinx-autobuild>=2025.8.25",
     "sphinx-autodoc-typehints>=3.2.0",
-]
-examples = [
-    "anylogic-alpyne",
-    "gymnasium==0.29.1",
 ]
 
 [project.urls]

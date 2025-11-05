@@ -9,19 +9,31 @@ from containerl.interface.agent.client import main as validate_agent_connection
 
 # Test cases with descriptive IDs
 TEST_CASES = [
-    pytest.param("./anylogic/stock_management/agent/", id="anylogic/stock_management"),
-    pytest.param("./generic/agents/discrete_actions/", id="generic/discrete_actions"),
     pytest.param(
-        "./generic/agents/multibinary_actions/", id="generic/multibinary_actions"
+        "./examples/anylogic/stock_management/agent/",
+        id="anylogic/stock_management/rl_agent",
     ),
     pytest.param(
-        "./generic/agents/multidiscrete_actions/", id="generic/multidiscrete_actions"
+        "./examples/anylogic/stock_management/proportional_agent/",
+        id="anylogic/stock_management/proportional_agent",
     ),
     pytest.param(
-        "./generic/agents/continuous_actions/", id="generic/continuous_actions"
+        "./examples/generic/agents/discrete_actions/", id="generic/discrete_actions"
     ),
     pytest.param(
-        "./generic/agents/continuous_action/", id="generic/single_continuous_action"
+        "./examples/generic/agents/multibinary_actions/",
+        id="generic/multibinary_actions",
+    ),
+    pytest.param(
+        "./examples/generic/agents/multidiscrete_actions/",
+        id="generic/multidiscrete_actions",
+    ),
+    pytest.param(
+        "./examples/generic/agents/continuous_actions/", id="generic/continuous_actions"
+    ),
+    pytest.param(
+        "./examples/generic/agents/continuous_action/",
+        id="generic/single_continuous_action",
     ),
 ]
 

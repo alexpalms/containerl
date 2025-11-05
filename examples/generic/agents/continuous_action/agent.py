@@ -1,7 +1,10 @@
+"""An example of a generic agent with continuous action space and dictionary observations."""
+
 import numpy as np
 from gymnasium import spaces
 
 from containerl.interface import create_agent_server
+
 
 class Agent:
     def __init__(self):
@@ -24,8 +27,11 @@ class Agent:
         assert isinstance(observation, dict), "Observation must be a dictionary"
         for key, space in self.observation_space.spaces.items():
             assert key in observation, f"Missing observation key: {key}"
-            assert space.contains(observation[key]), f"Observation {observation[key]} not in space {space} for key {key}"
+            assert space.contains(observation[key]), (
+                f"Observation {observation[key]} not in space {space} for key {key}"
+            )
         return self.action_space.sample()
+
 
 if __name__ == "__main__":
     agent = Agent()
