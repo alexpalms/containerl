@@ -1,4 +1,3 @@
 anylogic-alpyne
 gymnasium==0.29.1
-containerl
 matplotlib

@@ -12,42 +12,47 @@ from containerl.interface.environment.client import (
 # Define environments and their build configurations
 TEST_CASES = [
     pytest.param(
-        "./anylogic/stock_management/environment/", id="anylogic/stock_management"
+        "./examples/anylogic/stock_management/environment/",
+        id="anylogic/stock_management",
     ),
     pytest.param(
-        "./generic/environments/discrete_actions/", id="generic/discrete_actions"
+        "./examples/generic/environments/discrete_actions/",
+        id="generic/discrete_actions",
     ),
     pytest.param(
-        "./generic/environments/multibinary_actions/", id="generic/multibinary_actions"
+        "./examples/generic/environments/multibinary_actions/",
+        id="generic/multibinary_actions",
     ),
     pytest.param(
-        "./generic/environments/multidiscrete_actions/",
+        "./examples/generic/environments/multidiscrete_actions/",
         id="generic/multidiscrete_actions",
     ),
     pytest.param(
-        "./generic/environments/continuous_actions/", id="generic/continuous_actions"
+        "./examples/generic/environments/continuous_actions/",
+        id="generic/continuous_actions",
     ),
     pytest.param(
-        "./generic/environments/continuous_action/", id="generic/continuous_action"
+        "./examples/generic/environments/continuous_action/",
+        id="generic/continuous_action",
     ),
     pytest.param(
-        "./generic/environments/discrete_actions_vectorized/",
+        "./examples/generic/environments/discrete_actions_vectorized/",
         id="generic/discrete_actions_vectorized",
     ),
     pytest.param(
-        "./generic/environments/multibinary_actions_vectorized/",
+        "./examples/generic/environments/multibinary_actions_vectorized/",
         id="generic/multibinary_actions_vectorized",
     ),
     pytest.param(
-        "./generic/environments/multidiscrete_actions_vectorized/",
+        "./examples/generic/environments/multidiscrete_actions_vectorized/",
         id="generic/multidiscrete_actions_vectorized",
     ),
     pytest.param(
-        "./generic/environments/continuous_actions_vectorized/",
+        "./examples/generic/environments/continuous_actions_vectorized/",
         id="generic/continuous_actions_vectorized",
     ),
     pytest.param(
-        "./generic/environments/continuous_action_vectorized/",
+        "./examples/generic/environments/continuous_action_vectorized/",
         id="generic/continuous_action_vectorized",
     ),
 ]

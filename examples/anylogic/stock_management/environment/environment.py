@@ -83,7 +83,8 @@ class Environment(AlpyneEnv):
     """
 
     def __init__(self):
-        self.logger = logging.getLogger("alpyne").setLevel(logger.logging.WARNING)
+        self.logger = logging.getLogger("alpyne")
+        self.logger.setLevel(logging.INFO)
         current_dir = os.path.dirname(__file__)
         model_path = os.path.join(current_dir, "model.jar")
         assert os.path.exists(model_path), rf"Missing file '{model_path}'."

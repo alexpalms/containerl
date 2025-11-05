@@ -1,6 +1,19 @@
 FROM python:3.11-slim
 
+COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /bin/
+
 WORKDIR /app
+
+RUN uv venv
+
+# Copy full repository, build/install package with `uv`, then remove repo
+COPY . /tmp/repo
+
+RUN set -eux; \
+    cd /tmp/repo && uv build; \
+    cd /app; \
+    uv pip install --no-cache-dir /tmp/repo/dist/*.whl; \
+    rm -rf /tmp/repo
 
 RUN apt-get update && apt-get install -y \
     git \
@@ -15,10 +28,10 @@ RUN git clone -b v2.7.0 https://github.com/AVSLab/basilisk.git
 WORKDIR /app/basilisk
 
 # Install common Python dependencies that Basilisk requires
-RUN pip install pandas numpy matplotlib scipy pytest pytest-cov pytest-xdist bokeh protobuf tqdm
+RUN uv pip install pandas numpy matplotlib scipy pytest pytest-cov pytest-xdist bokeh protobuf tqdm
 
 # Install dependencies from requirements file
-RUN pip install -r requirements_dev.txt
+RUN uv pip install -r requirements_dev.txt
 
 # Run conanfile.py
 RUN python conanfile.py
@@ -29,15 +42,12 @@ RUN git clone https://github.com/AVSLab/bsk_rl.git
 
 WORKDIR /app/bsk_rl
 
-RUN pip install -e .
+RUN uv pip install -e .
 
 RUN finish_install
 
 # Copy all files from the current directory to the container
 COPY basilisk/environment/ .
 
-# Install requirements if the file exists
-RUN if [ -f requirements ]; then pip install --no-cache-dir -r requirements; fi
-
-ENTRYPOINT ["python", "environment.py"]
+ENTRYPOINT ["uv", "run", "python", "environment.py"]
 
