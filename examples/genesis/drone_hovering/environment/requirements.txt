@@ -1,5 +1,0 @@
-gymnasium
-containerl
-genesis-world
-open3d
-libigl == 2.5.1

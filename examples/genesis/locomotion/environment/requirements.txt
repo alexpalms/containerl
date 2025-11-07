@@ -1,4 +1,0 @@
-gymnasium
-containerl
-genesis-world
-libigl == 2.5.1
