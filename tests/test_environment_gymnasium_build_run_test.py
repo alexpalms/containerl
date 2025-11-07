@@ -11,10 +11,12 @@ from containerl.interface.environment.client import (
 
 # Define environments and their build configurations
 TEST_CASES = [
-    pytest.param("./gymnasium/environments/classic_control/", id="classic_control"),
-    pytest.param("./gymnasium/environments/box2d/", id="box2d"),
-    pytest.param("./gymnasium/environments/mujoco/", id="mujoco"),
-    pytest.param("./gymnasium/environments/atari/", id="atari"),
+    pytest.param(
+        "./examples/gymnasium/environments/classic_control/", id="classic_control"
+    ),
+    pytest.param("./examples/gymnasium/environments/box2d/", id="box2d"),
+    pytest.param("./examples/gymnasium/environments/mujoco/", id="mujoco"),
+    pytest.param("./examples/gymnasium/environments/atari/", id="atari"),
 ]
 
 

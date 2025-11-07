@@ -1,2 +1,1 @@
 gymnasium[mujoco]
-containerl
