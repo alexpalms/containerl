@@ -81,12 +81,12 @@ def json_to_space_proto(json_dict: dict[str, str | int | list[float | int]]) -> 
 def generate_spaces_info_from_gym_spaces(
     observation_space: dict[str, AllowedSpaces],
     action_space: AllowedSpaces,
-    environment_type: EnvironmentType | None = None,
+    environment_type: type[EnvironmentType] | None = None,
 ) -> dict[
     str,
     dict[str, dict[str, str | int | list[float | int]]]
     | dict[str, str | int | list[float | int]]
-    | EnvironmentType
+    | type[EnvironmentType]
     | None,
 ]:
     """Generate space information dictionaries from Gymnasium spaces."""
@@ -107,7 +107,7 @@ def generate_spaces_info_from_gym_spaces(
         str,
         dict[str, dict[str, str | int | list[float | int]]]
         | dict[str, str | int | list[float | int]]
-        | EnvironmentType
+        | type[EnvironmentType]
         | None,
     ] = {
         "observationSpaceInfo": observation_space_info,
@@ -169,7 +169,7 @@ def native_to_numpy_vec(
     if isinstance(space, spaces.Box):
         return np.array(obj, dtype=space.dtype).reshape(num_envs, *space.shape)
     elif isinstance(space, spaces.Discrete):
-        return np.array(obj, dtype=np.int64).reshape(num_envs, 1)
+        return np.array(obj, dtype=np.int64).reshape(num_envs, *())
     elif isinstance(space, spaces.MultiDiscrete):
         return np.array(obj, dtype=np.int64).reshape(num_envs, *space.shape)
     else:  # MultiBinary
