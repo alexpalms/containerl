@@ -13,16 +13,21 @@ import numpy as np
 from containerl.interface.proto_pb2 import (
     Empty,
     EnvironmentType,
+    InitRequest,
     RenderResponse,
+    ResetRequest,
     ResetResponse,
     SpacesResponse,
+    StepRequest,
     StepResponse,
 )
 from containerl.interface.proto_pb2_grpc import (
-    EnvironmentService,
+    EnvironmentServiceServicer,
     add_EnvironmentServiceServicer_to_server,
 )
 from containerl.interface.utils import (
+    AllowedSpaces,
+    AllowedTypes,
     native_to_numpy,
     native_to_numpy_vec,
     numpy_to_native,
@@ -30,16 +35,22 @@ from containerl.interface.utils import (
 )
 
 
-class EnvironmentServicer(EnvironmentService):
+class EnvironmentServicer(EnvironmentServiceServicer):
     """gRPC servicer that wraps the GymEnvironment."""
 
-    def __init__(self, environment_class):
-        self.env = None
+    def __init__(
+        self,
+        environment_class: type[gym.Env[dict[str, AllowedTypes], AllowedTypes]],
+    ) -> None:
+        self.env: gym.Env[dict[str, AllowedTypes], AllowedTypes] | None = None
         self.environment_class = environment_class
-        self.environment_type = None
-        self.num_envs = None
+        self.environment_type: EnvironmentType | None = None
+        self.num_envs: int | None = None
+        self.space_type_map: dict[str, AllowedSpaces] = {}
 
-    def Init(self, request, context):
+    def Init(
+        self, request: InitRequest, context: grpc.ServicerContext
+    ) -> SpacesResponse:
         """Initialize the environment and return space information."""
         try:
             # Prepare initialization arguments
@@ -58,19 +69,21 @@ class EnvironmentServicer(EnvironmentService):
             response = SpacesResponse()
 
             # Handle observation space (Dict space)
-            assert isinstance(self.env.observation_space, gym.spaces.Dict), (
-                "Observation space must be a Dict"
-            )
+            if not isinstance(self.env.observation_space, gym.spaces.Dict):
+                raise Exception("Observation space must be a Dict")
+
             for space_name, space in self.env.observation_space.spaces.items():
+                self.space_type_map[space_name] = space
                 space_proto = response.observation_space[space_name]
                 numpy_to_native_space(space, space_proto)
 
             # Handle action space
             action_space = self.env.action_space
             if isinstance(action_space, gym.spaces.MultiBinary):
-                assert len(action_space.shape) == 1, (
-                    "MultiBinary action space must be 1D, consider flattening it."
-                )
+                if len(action_space.shape) != 1:
+                    raise Exception(
+                        "MultiBinary action space must be 1D, consider flattening it."
+                    )
             numpy_to_native_space(action_space, response.action_space)
 
             if hasattr(self.env, "num_envs"):
@@ -95,7 +108,11 @@ class EnvironmentServicer(EnvironmentService):
             )
             return SpacesResponse()
 
-    def Reset(self, request, context):
+    def Reset(
+        self,
+        request: ResetRequest,
+        context: grpc.ServicerContext,
+    ) -> ResetResponse:
         """Reset the environment and return the initial observation."""
         try:
             if self.env is None:
@@ -133,7 +150,7 @@ class EnvironmentServicer(EnvironmentService):
             )
             return ResetResponse()
 
-    def Step(self, request, context):
+    def Step(self, request: StepRequest, context: grpc.ServicerContext) -> StepResponse:
         """Take a step in the environment."""
         try:
             if self.env is None:
@@ -185,7 +202,7 @@ class EnvironmentServicer(EnvironmentService):
             )
             return StepResponse()
 
-    def Render(self, request, context):
+    def Render(self, _request: Empty, context: grpc.ServicerContext) -> RenderResponse:
         """Render the environment."""
         try:
             if self.env is None:
@@ -217,7 +234,7 @@ class EnvironmentServicer(EnvironmentService):
             )
             return RenderResponse()
 
-    def Close(self, request, context):
+    def Close(self, _request: Empty, context: grpc.ServicerContext) -> Empty:
         """Close the environment."""
         try:
             if self.env is not None:
@@ -234,17 +251,22 @@ class EnvironmentServicer(EnvironmentService):
             )
             return Empty()
 
-    def _get_serializable_observation(self, observation):
+    def _get_serializable_observation(
+        self, observation: dict[str, AllowedTypes]
+    ) -> dict[str, list[int | float] | int]:
         if self.environment_type == EnvironmentType.VECTORIZED:
             return {key: value.tolist() for key, value in observation.items()}
         else:
             return {
-                key: numpy_to_native(value, self.env.observation_space[key])
-                for key, value in observation.items()
+                key: numpy_to_native(observation[key], space)
+                for key, space in self.space_type_map.items()
             }
 
 
-def create_environment_server(environment_class, port=50051):
+def create_environment_server(
+    environment_class: gym.Env[dict[str, AllowedSpaces], AllowedSpaces],
+    port: int = 50051,
+) -> None:
     """Start the gRPC server."""
     logger = logging.getLogger("containerl.environment_server")
     environment_server = EnvironmentServicer(environment_class)

@@ -1,7 +1,7 @@
 """Utility functions for converting between Gymnasium spaces and protobuf representations."""
 
 import json
-from typing import cast
+from typing import Any
 
 import numpy as np
 from google.protobuf import json_format
@@ -9,7 +9,8 @@ from gymnasium import spaces
 
 from containerl.interface.proto_pb2 import EnvironmentType, Space
 
-AllowedSpaces = spaces.Box | spaces.Discrete | spaces.MultiDiscrete | spaces.MultiBinary
+AllowedTypes = np.ndarray | np.integer[Any]
+AllowedSpaces = spaces.Space[AllowedTypes]
 
 
 def numpy_to_native_space(space: AllowedSpaces, space_proto: Space) -> None:
@@ -30,11 +31,13 @@ def numpy_to_native_space(space: AllowedSpaces, space_proto: Space) -> None:
         space_proto.nvec.extend(space.nvec.tolist())
         space_proto.shape.extend(space.shape)
         space_proto.dtype = str(space.dtype)
-    else:  # MultiBinary
+    elif isinstance(space, spaces.MultiBinary):
         space_proto.type = "MultiBinary"
         space_proto.nvec.extend(list(space.shape))
         space_proto.shape.extend(space.shape)
         space_proto.dtype = str(space.dtype)
+    else:
+        raise ValueError(f"Unsupported space type: {type(space)}")
 
 
 def native_to_numpy_space(proto_space: Space) -> AllowedSpaces:
@@ -118,9 +121,7 @@ def generate_spaces_info_from_gym_spaces(
     return results
 
 
-def numpy_to_native(
-    obj: np.ndarray, space: AllowedSpaces
-) -> list[int | float] | int | float:
+def numpy_to_native(obj: AllowedTypes, space: AllowedSpaces) -> list[int | float] | int:
     """Convert numpy arrays and other non-serializable objects to serializable types based on the space.
 
     Args:
@@ -129,13 +130,13 @@ def numpy_to_native(
     """
     # Handle the four base space types
     if isinstance(space, spaces.Discrete):
-        return cast(int | float, obj.item())
+        return obj.item()
     else:
-        return cast(list[int | float], obj.tolist())
+        return obj.tolist()
 
 
 def native_to_numpy(
-    obj: list[int | float] | int | float, space: AllowedSpaces
+    obj: list[int | float] | int, space: AllowedSpaces
 ) -> np.ndarray | np.int64:
     """Convert serialized objects back to their original form based on space.
 
@@ -152,8 +153,10 @@ def native_to_numpy(
             raise ValueError("Expected int for Discrete space deserialization")
     elif isinstance(space, spaces.MultiDiscrete):
         return np.array(obj, dtype=np.int64).reshape(space.shape)
-    else:  # MultiBinary
+    elif isinstance(space, spaces.MultiBinary):
         return np.array(obj, dtype=np.int8).reshape(space.shape)
+    else:
+        raise ValueError(f"Unsupported space type: {type(space)}")
 
 
 def native_to_numpy_vec(
@@ -172,5 +175,7 @@ def native_to_numpy_vec(
         return np.array(obj, dtype=np.int64).reshape(num_envs, *())
     elif isinstance(space, spaces.MultiDiscrete):
         return np.array(obj, dtype=np.int64).reshape(num_envs, *space.shape)
-    else:  # MultiBinary
+    elif isinstance(space, spaces.MultiBinary):
         return np.array(obj, dtype=np.int8).reshape(num_envs, *space.shape)
+    else:
+        raise ValueError(f"Unsupported space type: {type(space)}")
