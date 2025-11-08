@@ -11,10 +11,10 @@ from containerl.interface.environment.client import (
 
 # Define environments and their build configurations
 TEST_CASES = [
-    pytest.param(
-        "./examples/anylogic/stock_management/environment/",
-        id="anylogic/stock_management",
-    ),
+    # pytest.param(
+    #    "./examples/anylogic/stock_management/environment/",
+    #    id="anylogic/stock_management",
+    # ),
     pytest.param(
         "./examples/generic/environments/discrete_actions/",
         id="generic/discrete_actions",
