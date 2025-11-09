@@ -1,12 +1,20 @@
-import numpy as np
+"""A simple discrete action environment with dictionary observations."""
+
 import random
-from gymnasium import spaces
+from typing import Any, cast
+
 import gymnasium as gym
+import numpy as np
+from gymnasium import spaces
 
 from containerl.interface import create_environment_server
+from containerl.interface.utils import AllowedInfoValueTypes, AllowedTypes
 
-class Environment(gym.Env):
-    def __init__(self):
+
+class Environment(gym.Env[dict[str, AllowedTypes], np.integer[Any]]):
+    """A simple discrete action environment with dictionary observations."""
+
+    def __init__(self) -> None:
         # Observations are dictionaries
         self.observation_space = spaces.Dict(
             {
@@ -23,37 +31,58 @@ class Environment(gym.Env):
 
         self.render_mode = "rgb_array"
 
-    def reset(self, seed=None, options=None):
+    def reset(
+        self, *, seed: int | None = None, options: dict[str, Any] | None = None
+    ) -> tuple[dict[str, AllowedTypes], dict[str, AllowedInfoValueTypes]]:
+        """Reset the environment."""
         super(type(self), self).reset(seed=seed)
         self.env_step = 0
-        return self.get_observation(), self.get_info()
+        return self._get_observation(), self._get_info()
 
-    def step(self, action):
-        assert self.action_space.contains(action), f"Action {action} not in action space {self.action_space}"
+    def step(
+        self, action: np.integer[Any]
+    ) -> tuple[
+        dict[str, AllowedTypes], float, bool, bool, dict[str, AllowedInfoValueTypes]
+    ]:
+        """Take a step in the environment."""
+        if not self.action_space.contains(action):
+            raise Exception(f"Action {action} not in action space {self.action_space}")
+
         self.env_step += 1
-        return self.get_observation(), self.get_reward(), self.get_episode_termination(), self.get_episode_abortion(), self.get_info()
+        return (
+            self._get_observation(),
+            self._get_reward(),
+            self._get_episode_termination(),
+            self._get_episode_abortion(),
+            self._get_info(),
+        )
 
-    def get_observation(self):
+    def _get_observation(self) -> dict[str, AllowedTypes]:
         return self.observation_space.sample()
 
-    def get_reward(self):
-        return random.uniform(-1.0, 1.0)
+    def _get_reward(self) -> float:
+        return random.uniform(-1.0, 1.0)  # noqa: S311  # Ignoring criptographically weak RNG for example
 
-    def get_episode_termination(self):
+    def _get_episode_termination(self) -> bool:
         return True if self.env_step == 10 else False
 
-    def get_episode_abortion(self):
+    def _get_episode_abortion(self) -> bool:
         return False
 
-    def get_info(self):
+    def _get_info(self) -> dict[str, AllowedInfoValueTypes]:
         return {}
 
-    def render(self):
+    def render(self) -> np.ndarray:  # type: ignore[override]
+        """Render the environment."""
         # Generate random RGB image
         return np.random.randint(0, 255, (100, 100, 3), dtype=np.uint8)
 
-    def close(self):
+    def close(self) -> None:
+        """Close the environment."""
         pass
 
+
 if __name__ == "__main__":
-    create_environment_server(Environment)
+    create_environment_server(
+        cast(type[gym.Env[dict[str, AllowedTypes], AllowedTypes]], Environment)
+    )

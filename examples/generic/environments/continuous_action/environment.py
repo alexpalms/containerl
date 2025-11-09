@@ -32,10 +32,7 @@ class Environment(gym.Env[dict[str, AllowedTypes], np.ndarray]):
         self.render_mode = "rgb_array"
 
     def reset(
-        self,
-        *,
-        seed: int | None = None,
-        options: dict[str, Any] | None = None,
+        self, *, seed: int | None = None, options: dict[str, Any] | None = None
     ) -> tuple[dict[str, AllowedTypes], dict[str, AllowedInfoValueTypes]]:
         """Reset the environment."""
         super(type(self), self).reset(seed=seed)
