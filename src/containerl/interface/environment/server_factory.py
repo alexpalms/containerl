@@ -202,7 +202,7 @@ class EnvironmentServicer(EnvironmentServiceServicer):
             )
             return StepResponse()
 
-    def Render(self, _request: Empty, context: grpc.ServicerContext) -> RenderResponse:
+    def Render(self, request: Empty, context: grpc.ServicerContext) -> RenderResponse:
         """Render the environment."""
         try:
             if self.env is None:
@@ -234,7 +234,7 @@ class EnvironmentServicer(EnvironmentServiceServicer):
             )
             return RenderResponse()
 
-    def Close(self, _request: Empty, context: grpc.ServicerContext) -> Empty:
+    def Close(self, request: Empty, context: grpc.ServicerContext) -> Empty:
         """Close the environment."""
         try:
             if self.env is not None:
@@ -264,7 +264,7 @@ class EnvironmentServicer(EnvironmentServiceServicer):
 
 
 def create_environment_server(
-    environment_class: gym.Env[dict[str, AllowedSpaces], AllowedSpaces],
+    environment_class: type[gym.Env[dict[str, AllowedTypes], AllowedTypes]],
     port: int = 50051,
 ) -> None:
     """Start the gRPC server."""

@@ -11,6 +11,7 @@ from containerl.interface.proto_pb2 import EnvironmentType, Space
 
 AllowedTypes = np.ndarray | np.integer[Any]
 AllowedSpaces = spaces.Space[AllowedTypes]
+AllowedInfoValueTypes = str | int | float | list[int | float] | dict[str, Any]
 
 
 def numpy_to_native_space(space: AllowedSpaces, space_proto: Space) -> None:
