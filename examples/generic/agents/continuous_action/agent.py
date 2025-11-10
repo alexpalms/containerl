@@ -1,13 +1,19 @@
 """An example of a generic agent with continuous action space and dictionary observations."""
 
+from typing import cast
+
 import numpy as np
 from gymnasium import spaces
 
 from containerl.interface import create_agent_server
+from containerl.interface.utils import Agent as BaseAgent
+from containerl.interface.utils import AllowedTypes
 
 
-class Agent:
-    def __init__(self):
+class Agent(BaseAgent[dict[str, AllowedTypes], np.ndarray]):
+    """A simple agent with dictionary observations and continuous action space."""
+
+    def __init__(self) -> None:
         # Observations are dictionaries
         self.observation_space = spaces.Dict(
             {
@@ -22,17 +28,18 @@ class Agent:
 
         self.action_space = spaces.Box(low=0.0, high=10.0, shape=(1,), dtype=np.float32)
 
-    def get_action(self, observation):
-        # Check if observation is a valid instance of the observation space
-        assert isinstance(observation, dict), "Observation must be a dictionary"
-        for key, space in self.observation_space.spaces.items():
-            assert key in observation, f"Missing observation key: {key}"
-            assert space.contains(observation[key]), (
-                f"Observation {observation[key]} not in space {space} for key {key}"
-            )
+    def get_action(self, observation: dict[str, AllowedTypes]) -> np.ndarray:
+        """Return a random action based on the observation."""
+        for key, space in cast(spaces.Dict, self.observation_space).spaces.items():
+            if key not in observation:
+                raise Exception("Missing observation key: {key}")
+            if not space.contains(observation[key]):
+                raise Exception(
+                    f"Observation {observation[key]} not in space {space} for key {key}"
+                )
         return self.action_space.sample()
 
 
 if __name__ == "__main__":
     agent = Agent()
-    create_agent_server(agent)
+    create_agent_server(cast(BaseAgent[dict[str, AllowedTypes], AllowedTypes], agent))

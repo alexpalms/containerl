@@ -1,7 +1,8 @@
 """Utility functions for converting between Gymnasium spaces and protobuf representations."""
 
 import json
-from typing import Any
+from abc import abstractmethod
+from typing import Any, Generic, TypeVar, final
 
 import numpy as np
 from google.protobuf import json_format
@@ -12,6 +13,26 @@ from containerl.interface.proto_pb2 import EnvironmentType, Space
 AllowedTypes = np.ndarray | np.integer[Any]
 AllowedSpaces = spaces.Space[AllowedTypes]
 AllowedInfoValueTypes = str | int | float | list[int | float] | dict[str, Any]
+
+ObsType = TypeVar("ObsType")
+ActType = TypeVar("ActType")
+
+
+class Agent(Generic[ObsType, ActType]):
+    """Abstract base class for agents."""
+
+    observation_space: spaces.Space[ObsType]
+    action_space: spaces.Space[ActType]
+
+    @final
+    def get_spaces(self) -> tuple[spaces.Space[ObsType], spaces.Space[ActType]]:
+        """Return the observation and action spaces."""
+        return self.observation_space, self.action_space
+
+    @abstractmethod
+    def get_action(self, observation: ObsType) -> ActType:
+        """Given an observation, return an action."""
+        pass
 
 
 def numpy_to_native_space(space: AllowedSpaces, space_proto: Space) -> None:
