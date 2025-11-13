@@ -47,6 +47,13 @@ docs = [
     "sphinx-autobuild>=2025.8.25",
     "sphinx-autodoc-typehints>=3.2.0",
 ]
+examples = [
+    "ale-py>=0.11.2",
+    "gymnasium==0.29.1",
+    "matplotlib>=3.10.7",
+    "matplotlib-stubs>=0.3.11",
+    "types-psutil>=7.0.0.20251111",
+]
 
 [project.urls]
 Homepage = "https://github.com/alexpalms/containerl"
