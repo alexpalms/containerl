@@ -12,7 +12,8 @@ from containerl.interface.proto_pb2 import EnvironmentType, Space
 
 AllowedTypes = np.ndarray | np.integer[Any]
 AllowedSpaces = spaces.Space[AllowedTypes]
-AllowedInfoValueTypes = str | int | float | list[int | float] | dict[str, Any]
+AllowedInfoBaseTypes = str | bool | int | float
+AllowedInfoValueTypes = AllowedInfoBaseTypes | list[AllowedInfoBaseTypes]
 
 ObsType = TypeVar("ObsType")
 ActType = TypeVar("ActType")

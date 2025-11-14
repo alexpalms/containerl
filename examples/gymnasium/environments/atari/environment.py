@@ -1,69 +1,97 @@
-import gymnasium as gym
-import ale_py
-import numpy as np
-from containerl.interface import create_environment_server
+"""Environment wrapper for Atari environments using Gymnasium and ALE."""
 
-class Environment(gym.Env):
-    def __init__(self):
-        """
-        Available Envs: https://ale.farama.org/environments/
-        """
+from typing import Any, cast
+
+import ale_py
+import gymnasium as gym
+import numpy as np
+
+from containerl.interface import create_environment_server
+from containerl.interface.utils import (
+    AllowedInfoBaseTypes,
+    AllowedInfoValueTypes,
+    AllowedTypes,
+)
+
+
+class Environment(gym.Env[dict[str, np.ndarray], int]):
+    """Environment wrapper for Atari environments using Gymnasium and ALE."""
+
+    def __init__(self) -> None:
+        # Available Envs: https://ale.farama.org/environments/
         self.render_mode = "rgb_array"
         gym.register_envs(ale_py)
-        self._env = gym.make("ALE/Breakout-v5", render_mode=self.render_mode, obs_type="ram")
+        self._env: gym.Env[np.ndarray, int] = gym.make(  # pyright: ignore[reportUnknownMemberType]
+            "ALE/Breakout-v5", render_mode=self.render_mode, obs_type="ram"
+        )
 
-        self.is_observation_dict = isinstance(self._env.observation_space, gym.spaces.Dict)
-        if not self.is_observation_dict:
-            self.observation_space = gym.spaces.Dict({"observation": self._env.observation_space})
-        else:
-            self.observation_space = self._env.observation_space
+        self.observation_space = gym.spaces.Dict(
+            {"observation": self._env.observation_space}
+        )
 
         self.action_space = self._env.action_space
 
-    def _process_observation(self, obs):
-        if self.is_observation_dict:
-            return obs
-        else:
-            return {"observation": obs}
+    def _process_observation(self, obs: np.ndarray) -> dict[str, np.ndarray]:
+        return {"observation": obs}
 
-    def _process_info(self, info):
+    def _process_info(self, info: dict[str, Any]) -> dict[str, AllowedInfoValueTypes]:
         for key, value in info.items():
             if isinstance(value, np.ndarray):
                 info[key] = value.tolist()
             elif isinstance(value, np.number):  # Catches all numeric types (int, float)
                 info[key] = value.item()  # .item() converts to native Python type
             elif isinstance(value, np.bool_):
-                info[key] = bool(value)
+                info[key] = bool(cast(bool, value))
             elif isinstance(value, (list, tuple)):
+                value = cast(list[AllowedInfoBaseTypes], value)
                 # Process lists and tuples that might contain numpy types
-                processed = []
+                processed: list[AllowedInfoValueTypes] = []
                 for item in value:
                     if isinstance(item, np.ndarray):
                         processed.append(item.tolist())
-                    elif isinstance(item, np.number):
+                    elif isinstance(item, np.integer) or isinstance(item, np.floating):
                         processed.append(item.item())
                     elif isinstance(item, np.bool_):
                         processed.append(bool(item))
                     else:
                         processed.append(item)
                 # Convert back to the original type (list or tuple)
-                info[key] = type(value)(processed)
+                info[key] = processed
 
         return info
 
-    def reset(self, seed=None, options=None):
+    def reset(
+        self, *, seed: int | None = None, options: dict[str, Any] | None = None
+    ) -> tuple[dict[str, np.ndarray], dict[str, AllowedInfoValueTypes]]:
+        """Reset the environment."""
         obs, info = self._env.reset(seed=seed, options=options)
         return self._process_observation(obs), self._process_info(info)
 
-    def step(self, action):
+    def step(
+        self, action: int
+    ) -> tuple[
+        dict[str, np.ndarray], float, bool, bool, dict[str, AllowedInfoValueTypes]
+    ]:
+        """Take a step in the environment."""
         obs, reward, terminated, truncated, info = self._env.step(action)
-        return self._process_observation(obs), reward, terminated, truncated, self._process_info(info)
+        return (
+            self._process_observation(obs),
+            float(reward),
+            terminated,
+            truncated,
+            self._process_info(info),
+        )
 
-    def render(self):
-        return self._env.render()
+    def render(self) -> np.ndarray:  # type: ignore[override]
+        """Render the environment."""
+        return self._env.render()  # type: ignore
 
-    def close(self):
-        return self._env.close()
+    def close(self) -> None:
+        """Close the environment."""
+        return self._env.close()  # type: ignore
+
 
 if __name__ == "__main__":
-    create_environment_server(Environment)
+    create_environment_server(
+        cast(type[gym.Env[dict[str, AllowedTypes], AllowedTypes]], Environment)
+    )
