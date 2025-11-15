@@ -4,12 +4,22 @@
 import logging
 import traceback
 from concurrent import futures
+from typing import Generic
 
 import grpc
 import gymnasium as gym
 import msgpack
 import numpy as np
 
+from containerl import (
+    AllowedSpaces,
+    CRLActType,
+    CRLObsType,
+    native_to_numpy,
+    native_to_numpy_vec,
+    numpy_to_native,
+    numpy_to_native_space,
+)
 from containerl.interface.proto_pb2 import (
     Empty,
     EnvironmentType,
@@ -25,24 +35,20 @@ from containerl.interface.proto_pb2_grpc import (
     EnvironmentServiceServicer,
     add_EnvironmentServiceServicer_to_server,
 )
-from containerl.interface.utils import (
-    AllowedSpaces,
-    AllowedTypes,
-    native_to_numpy,
-    native_to_numpy_vec,
-    numpy_to_native,
-    numpy_to_native_space,
-)
 
 
-class EnvironmentServicer(EnvironmentServiceServicer):
+class CRLEnvironment(gym.Env[CRLObsType, CRLActType]):
+    """Abstract base class for Environments."""
+
+
+class EnvironmentServicer(Generic[CRLObsType, CRLActType], EnvironmentServiceServicer):
     """gRPC servicer that wraps the GymEnvironment."""
 
     def __init__(
         self,
-        environment_class: type[gym.Env[dict[str, AllowedTypes], AllowedTypes]],
+        environment_class: type[CRLEnvironment[CRLObsType, CRLActType]],
     ) -> None:
-        self.env: gym.Env[dict[str, AllowedTypes], AllowedTypes] | None = None
+        self.env: CRLEnvironment[CRLObsType, CRLActType] | None = None
         self.environment_class = environment_class
         self.environment_type: EnvironmentType | None = None
         self.num_envs: int | None = None
@@ -264,7 +270,7 @@ class EnvironmentServicer(EnvironmentServiceServicer):
 
 
 def create_environment_server(
-    environment_class: type[gym.Env[dict[str, AllowedTypes], AllowedTypes]],
+    environment_class: type[CRLEnvironment[CRLObsType, CRLActType]],
     port: int = 50051,
 ) -> None:
     """Start the gRPC server."""

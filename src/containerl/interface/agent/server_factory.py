@@ -3,11 +3,14 @@
 # gRPC Server Implementation
 import logging
 import traceback
+from abc import abstractmethod
+from collections.abc import Mapping
 from concurrent import futures
-from typing import cast
+from typing import Generic, cast, final
 
 import grpc
 import gymnasium as gym
+import gymnasium.spaces as spaces
 import msgpack
 
 from containerl.interface.proto_pb2 import (
@@ -21,23 +24,43 @@ from containerl.interface.proto_pb2_grpc import (
     add_AgentServiceServicer_to_server,
 )
 from containerl.interface.utils import (
-    Agent,
     AllowedTypes,
+    CRLActType,
+    CRLObsType,
     native_to_numpy,
     numpy_to_native,
     numpy_to_native_space,
 )
 
 
+class CRLAgent(Generic[CRLObsType, CRLActType]):
+    """Abstract base class for agents."""
+
+    observation_space: spaces.Space[CRLObsType]
+    action_space: spaces.Space[CRLActType]
+
+    @final
+    def get_spaces(self) -> tuple[spaces.Space[CRLObsType], spaces.Space[CRLActType]]:
+        """Return the observation and action spaces."""
+        return self.observation_space, self.action_space
+
+    @abstractmethod
+    def get_action(self, observation: CRLObsType) -> CRLActType:
+        """Given an observation, return an action."""
+        pass
+
+
 def build_agent_server(
-    agent: Agent[dict[str, AllowedTypes], AllowedTypes],
+    agent: CRLAgent[Mapping[str, AllowedTypes], AllowedTypes],
 ) -> AgentServiceServicer:
     """Create an AgentServicer class using the provided AgentClass."""
 
     class AgentServicer(AgentServiceServicer):
         """gRPC servicer that wraps the Agent."""
 
-        def __init__(self, agent: Agent[dict[str, AllowedTypes], AllowedTypes]) -> None:
+        def __init__(
+            self, agent: CRLAgent[Mapping[str, AllowedTypes], AllowedTypes]
+        ) -> None:
             self.agent = agent
             self.observation_space, self.action_space = self.agent.get_spaces()
             # Handle observation space (Dict space)
@@ -112,7 +135,7 @@ def build_agent_server(
 
 
 def create_agent_server(
-    agent: Agent[dict[str, AllowedTypes], AllowedTypes], port: int = 50051
+    agent: CRLAgent[Mapping[str, AllowedTypes], AllowedTypes], port: int = 50051
 ) -> None:
     """Start the gRPC server."""
     logger = logging.getLogger(__name__)

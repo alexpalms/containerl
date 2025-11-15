@@ -1,8 +1,8 @@
 """Utility functions for converting between Gymnasium spaces and protobuf representations."""
 
 import json
-from abc import abstractmethod
-from typing import Any, Generic, TypeVar, final
+from collections.abc import Mapping
+from typing import Any, TypeVar, cast
 
 import numpy as np
 from google.protobuf import json_format
@@ -10,30 +10,13 @@ from gymnasium import spaces
 
 from containerl.interface.proto_pb2 import EnvironmentType, Space
 
-AllowedTypes = np.ndarray | np.integer[Any]
-AllowedSpaces = spaces.Space[AllowedTypes]
+AllowedObsTypes = np.ndarray | np.integer[Any] | int
+AllowedActTypes = np.ndarray | np.integer[Any] | int
+AllowedSpaces = spaces.Space[AllowedObsTypes]
 AllowedInfoBaseTypes = str | bool | int | float
 AllowedInfoValueTypes = AllowedInfoBaseTypes | list[AllowedInfoBaseTypes]
-
-ObsType = TypeVar("ObsType")
-ActType = TypeVar("ActType")
-
-
-class Agent(Generic[ObsType, ActType]):
-    """Abstract base class for agents."""
-
-    observation_space: spaces.Space[ObsType]
-    action_space: spaces.Space[ActType]
-
-    @final
-    def get_spaces(self) -> tuple[spaces.Space[ObsType], spaces.Space[ActType]]:
-        """Return the observation and action spaces."""
-        return self.observation_space, self.action_space
-
-    @abstractmethod
-    def get_action(self, observation: ObsType) -> ActType:
-        """Given an observation, return an action."""
-        pass
+CRLObsType = TypeVar("CRLObsType", bound=Mapping[str, AllowedObsTypes])
+CRLActType = TypeVar("CRLActType", bound=AllowedActTypes)
 
 
 def numpy_to_native_space(space: AllowedSpaces, space_proto: Space) -> None:
@@ -144,7 +127,9 @@ def generate_spaces_info_from_gym_spaces(
     return results
 
 
-def numpy_to_native(obj: AllowedTypes, space: AllowedSpaces) -> list[int | float] | int:
+def numpy_to_native(
+    obj: AllowedObsTypes | AllowedActTypes, space: AllowedSpaces
+) -> list[int | float] | int:
     """Convert numpy arrays and other non-serializable objects to serializable types based on the space.
 
     Args:
@@ -202,3 +187,31 @@ def native_to_numpy_vec(
         return np.array(obj, dtype=np.int8).reshape(num_envs, *space.shape)
     else:
         raise ValueError(f"Unsupported space type: {type(space)}")
+
+
+def process_info(info: dict[str, Any]) -> dict[str, AllowedInfoValueTypes]:
+    """Process the info dictionary to convert numpy types to native Python types."""
+    for key, value in info.items():
+        if isinstance(value, np.ndarray):
+            info[key] = value.tolist()
+        elif isinstance(value, np.number):  # Catches all numeric types (int, float)
+            info[key] = value.item()  # .item() converts to native Python type
+        elif isinstance(value, np.bool_):
+            info[key] = bool(cast(bool, value))
+        elif isinstance(value, (list, tuple)):
+            value = cast(list[AllowedInfoBaseTypes], value)
+            # Process lists and tuples that might contain numpy types
+            processed: list[AllowedInfoValueTypes] = []
+            for item in value:
+                if isinstance(item, np.ndarray):
+                    processed.append(item.tolist())
+                elif isinstance(item, np.integer) or isinstance(item, np.floating):
+                    processed.append(item.item())
+                elif isinstance(item, np.bool_):
+                    processed.append(bool(item))
+                else:
+                    processed.append(item)
+            # Convert back to the original type (list or tuple)
+            info[key] = processed
+
+    return info

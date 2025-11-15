@@ -1,17 +1,20 @@
 """A simple discrete action environment with dictionary observations."""
 
 import random
-from typing import Any, cast
+from typing import Any
 
-import gymnasium as gym
 import numpy as np
 from gymnasium import spaces
 
-from containerl.interface import create_environment_server
-from containerl.interface.utils import AllowedInfoValueTypes, AllowedTypes
+from containerl import (
+    AllowedInfoValueTypes,
+    AllowedObsTypes,
+    CRLEnvironment,
+    create_environment_server,
+)
 
 
-class Environment(gym.Env[dict[str, AllowedTypes], np.integer[Any]]):
+class Environment(CRLEnvironment[dict[str, AllowedObsTypes], np.integer[Any]]):
     """A simple discrete action environment with dictionary observations."""
 
     def __init__(self) -> None:
@@ -33,7 +36,7 @@ class Environment(gym.Env[dict[str, AllowedTypes], np.integer[Any]]):
 
     def reset(
         self, *, seed: int | None = None, options: dict[str, Any] | None = None
-    ) -> tuple[dict[str, AllowedTypes], dict[str, AllowedInfoValueTypes]]:
+    ) -> tuple[dict[str, AllowedObsTypes], dict[str, AllowedInfoValueTypes]]:
         """Reset the environment."""
         super(type(self), self).reset(seed=seed)
         self.env_step = 0
@@ -42,7 +45,7 @@ class Environment(gym.Env[dict[str, AllowedTypes], np.integer[Any]]):
     def step(
         self, action: np.integer[Any]
     ) -> tuple[
-        dict[str, AllowedTypes], float, bool, bool, dict[str, AllowedInfoValueTypes]
+        dict[str, AllowedObsTypes], float, bool, bool, dict[str, AllowedInfoValueTypes]
     ]:
         """Take a step in the environment."""
         if not self.action_space.contains(action):
@@ -57,7 +60,7 @@ class Environment(gym.Env[dict[str, AllowedTypes], np.integer[Any]]):
             self._get_info(),
         )
 
-    def _get_observation(self) -> dict[str, AllowedTypes]:
+    def _get_observation(self) -> dict[str, AllowedObsTypes]:
         return self.observation_space.sample()
 
     def _get_reward(self) -> float:
@@ -83,6 +86,4 @@ class Environment(gym.Env[dict[str, AllowedTypes], np.integer[Any]]):
 
 
 if __name__ == "__main__":
-    create_environment_server(
-        cast(type[gym.Env[dict[str, AllowedTypes], AllowedTypes]], Environment)
-    )
+    create_environment_server(Environment)
