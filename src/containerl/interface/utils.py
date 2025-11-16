@@ -1,22 +1,29 @@
 """Utility functions for converting between Gymnasium spaces and protobuf representations."""
 
-import json
 from collections.abc import Mapping
 from typing import Any, TypeVar, cast
 
+import msgpack
 import numpy as np
-from google.protobuf import json_format
 from gymnasium import spaces
 
-from containerl.interface.proto_pb2 import EnvironmentType, Space
+from .proto_pb2 import Space
 
-AllowedObsTypes = np.ndarray | np.integer[Any] | int
-AllowedActTypes = np.ndarray | np.integer[Any] | int
-AllowedSpaces = spaces.Space[AllowedObsTypes]
+T = TypeVar("T")
+
+AllowedTypes = np.ndarray | np.integer[Any]
+AllowedSerializableTypes = list[int | float] | int
+AllowedSpaces = spaces.Space[AllowedTypes]
 AllowedInfoBaseTypes = str | bool | int | float
 AllowedInfoValueTypes = AllowedInfoBaseTypes | list[AllowedInfoBaseTypes]
-CRLObsType = TypeVar("CRLObsType", bound=Mapping[str, AllowedObsTypes])
-CRLActType = TypeVar("CRLActType", bound=AllowedActTypes)
+CRLObsType = TypeVar("CRLObsType", bound=Mapping[str, AllowedTypes])
+CRLActType = TypeVar("CRLActType", bound=AllowedTypes)
+
+
+def deserialize(data: bytes, cls: type[T]) -> T:
+    """Deserialize bytes to an object using msgpack."""
+    raw = msgpack.unpackb(data, raw=False)
+    return cls(**raw) if isinstance(raw, dict) else raw
 
 
 def numpy_to_native_space(space: AllowedSpaces, space_proto: Space) -> None:
@@ -72,64 +79,9 @@ def native_to_numpy_space(proto_space: Space) -> AllowedSpaces:
         raise ValueError(f"Unsupported space type: {proto_space.type}")
 
 
-def space_proto_to_json(space_proto: Space) -> dict[str, str | int | list[float | int]]:
-    """Convert a Space protobuf message to JSON dictionary."""
-    json_str = json_format.MessageToJson(space_proto)
-    json_dict: dict[str, str | int | list[float | int]] = json.loads(json_str)
-    return json_dict
-
-
-def json_to_space_proto(json_dict: dict[str, str | int | list[float | int]]) -> Space:
-    """Convert JSON dictionary back to a Space protobuf message."""
-    json_str = json.dumps(json_dict)
-    space_proto = Space()
-    json_format.Parse(json_str, space_proto)
-    return space_proto
-
-
-def generate_spaces_info_from_gym_spaces(
-    observation_space: dict[str, AllowedSpaces],
-    action_space: AllowedSpaces,
-    environment_type: type[EnvironmentType] | None = None,
-) -> dict[
-    str,
-    dict[str, dict[str, str | int | list[float | int]]]
-    | dict[str, str | int | list[float | int]]
-    | type[EnvironmentType]
-    | None,
-]:
-    """Generate space information dictionaries from Gymnasium spaces."""
-    observation_space_info: dict[str, dict[str, str | int | list[float | int]]] = {}
-    for key in sorted(observation_space.keys()):
-        value = observation_space[key]
-        proto_value = Space()
-        numpy_to_native_space(value, proto_value)
-        json_value_obs = space_proto_to_json(proto_value)
-        observation_space_info[key] = json_value_obs
-
-    proto_value = Space()
-    numpy_to_native_space(action_space, proto_value)
-    json_value = space_proto_to_json(proto_value)
-    action_space_info = json_value
-
-    results: dict[
-        str,
-        dict[str, dict[str, str | int | list[float | int]]]
-        | dict[str, str | int | list[float | int]]
-        | type[EnvironmentType]
-        | None,
-    ] = {
-        "observationSpaceInfo": observation_space_info,
-        "actionSpaceInfo": action_space_info,
-        "environmentType": environment_type,
-    }
-
-    return results
-
-
 def numpy_to_native(
-    obj: AllowedObsTypes | AllowedActTypes, space: AllowedSpaces
-) -> list[int | float] | int:
+    obj: AllowedTypes, space: AllowedSpaces
+) -> AllowedSerializableTypes:
     """Convert numpy arrays and other non-serializable objects to serializable types based on the space.
 
     Args:
@@ -144,8 +96,8 @@ def numpy_to_native(
 
 
 def native_to_numpy(
-    obj: list[int | float] | int, space: AllowedSpaces
-) -> np.ndarray | np.int64:
+    obj: AllowedSerializableTypes, space: AllowedSpaces
+) -> AllowedTypes:
     """Convert serialized objects back to their original form based on space.
 
     Args:
@@ -167,6 +119,7 @@ def native_to_numpy(
         raise ValueError(f"Unsupported space type: {type(space)}")
 
 
+# TODO: address when dealing with vectorized envs properly
 def native_to_numpy_vec(
     obj: list[int | float], space: AllowedSpaces, num_envs: int
 ) -> np.ndarray:
@@ -213,5 +166,9 @@ def process_info(info: dict[str, Any]) -> dict[str, AllowedInfoValueTypes]:
                     processed.append(item)
             # Convert back to the original type (list or tuple)
             info[key] = processed
+        else:
+            raise ValueError(
+                f"Unsupported info value type: {type(value)} for key: {key}"
+            )
 
     return info

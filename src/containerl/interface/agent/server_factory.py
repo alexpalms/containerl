@@ -13,17 +13,17 @@ import gymnasium as gym
 import gymnasium.spaces as spaces
 import msgpack
 
-from containerl.interface.proto_pb2 import (
+from ..proto_pb2 import (
     ActionResponse,
     Empty,
     ObservationRequest,
     SpacesResponse,
 )
-from containerl.interface.proto_pb2_grpc import (
+from ..proto_pb2_grpc import (
     AgentServiceServicer,
     add_AgentServiceServicer_to_server,
 )
-from containerl.interface.utils import (
+from ..utils import (
     AllowedTypes,
     CRLActType,
     CRLObsType,

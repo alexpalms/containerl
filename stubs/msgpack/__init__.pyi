@@ -1,0 +1,6 @@
+"""Stub file for msgpack module."""
+
+from typing import Any
+
+def packb(obj: Any, *, use_bin_type: bool = ...) -> bytes: ...
+def unpackb(packed: bytes, *, raw: bool = ...) -> Any: ...

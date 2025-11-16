@@ -8,13 +8,13 @@ from gymnasium import spaces
 
 from containerl import (
     AllowedInfoValueTypes,
-    AllowedObsTypes,
+    AllowedTypes,
     CRLEnvironment,
     create_environment_server,
 )
 
 
-class Environment(CRLEnvironment[dict[str, AllowedObsTypes], np.ndarray]):
+class Environment(CRLEnvironment[dict[str, AllowedTypes], np.ndarray]):
     """A simple multi-binary action environment with dictionary observations."""
 
     def __init__(self) -> None:
@@ -36,7 +36,7 @@ class Environment(CRLEnvironment[dict[str, AllowedObsTypes], np.ndarray]):
 
     def reset(
         self, *, seed: int | None = None, options: dict[str, Any] | None = None
-    ) -> tuple[dict[str, AllowedObsTypes], dict[str, AllowedInfoValueTypes]]:
+    ) -> tuple[dict[str, AllowedTypes], dict[str, AllowedInfoValueTypes]]:
         """Reset the environment."""
         super(type(self), self).reset(seed=seed)
         self.env_step = 0
@@ -45,7 +45,7 @@ class Environment(CRLEnvironment[dict[str, AllowedObsTypes], np.ndarray]):
     def step(
         self, action: np.ndarray
     ) -> tuple[
-        dict[str, AllowedObsTypes], float, bool, bool, dict[str, AllowedInfoValueTypes]
+        dict[str, AllowedTypes], float, bool, bool, dict[str, AllowedInfoValueTypes]
     ]:
         """Take a step in the environment."""
         if not self.action_space.contains(action):
@@ -60,7 +60,7 @@ class Environment(CRLEnvironment[dict[str, AllowedObsTypes], np.ndarray]):
             self._get_info(),
         )
 
-    def _get_observation(self) -> dict[str, AllowedObsTypes]:
+    def _get_observation(self) -> dict[str, AllowedTypes]:
         return self.observation_space.sample()
 
     def _get_reward(self) -> float:

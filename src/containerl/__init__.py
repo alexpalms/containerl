@@ -1,13 +1,17 @@
 __version__ = "0.1.0"
-from containerl import cli
-from containerl.interface.agent.client import AgentClient
-from containerl.interface.agent.server_factory import create_agent_server
-from containerl.interface.environment.client import EnvironmentClient
-from containerl.interface.environment.server_factory import (
+from . import cli
+from .interface.agent.client import AgentClient
+from .interface.agent.client import main as validate_agent_connection
+from .interface.agent.server_factory import create_agent_server
+from .interface.environment.client import EnvironmentClient
+from .interface.environment.client import (
+    main as validate_environment_connection,
+)
+from .interface.environment.server_factory import (
     CRLEnvironment,
     create_environment_server,
 )
-from containerl.interface.proto_pb2 import (
+from .interface.proto_pb2 import (
     ActionResponse,
     Empty,
     EnvironmentType,
@@ -21,37 +25,36 @@ from containerl.interface.proto_pb2 import (
     StepRequest,
     StepResponse,
 )
-from containerl.interface.proto_pb2_grpc import AgentServiceServicer as AgentService
-from containerl.interface.proto_pb2_grpc import (
+from .interface.proto_pb2_grpc import AgentServiceServicer as AgentService
+from .interface.proto_pb2_grpc import (
     AgentServiceStub,
     EnvironmentServiceStub,
     add_AgentServiceServicer_to_server,
     add_EnvironmentServiceServicer_to_server,
 )
-from containerl.interface.proto_pb2_grpc import (
+from .interface.proto_pb2_grpc import (
     EnvironmentServiceServicer as EnvironmentService,
 )
-from containerl.interface.utils import (
-    AllowedActTypes,
+from .interface.utils import (
     AllowedInfoValueTypes,
-    AllowedObsTypes,
+    AllowedSerializableTypes,
     AllowedSpaces,
+    AllowedTypes,
     CRLActType,
     CRLObsType,
-    generate_spaces_info_from_gym_spaces,
-    json_to_space_proto,
     native_to_numpy,
     native_to_numpy_space,
     native_to_numpy_vec,
     numpy_to_native,
     numpy_to_native_space,
     process_info,
-    space_proto_to_json,
 )
 
 __all__ = [
     "EnvironmentClient",
+    "validate_environment_connection",
     "AgentClient",
+    "validate_agent_connection",
     "EnvironmentService",
     "AgentService",
     "EnvironmentServiceStub",
@@ -76,17 +79,15 @@ __all__ = [
     "native_to_numpy_space",
     "numpy_to_native_space",
     "native_to_numpy_vec",
-    "space_proto_to_json",
-    "json_to_space_proto",
-    "generate_spaces_info_from_gym_spaces",
     "numpy_to_native",
     "native_to_numpy",
     "cli",
-    "AllowedObsTypes",
+    "AllowedTypes",
     "AllowedSpaces",
-    "AllowedActTypes",
+    "AllowedTypes",
     "AllowedInfoValueTypes",
     "CRLObsType",
     "CRLActType",
     "process_info",
+    "AllowedSerializableTypes",
 ]

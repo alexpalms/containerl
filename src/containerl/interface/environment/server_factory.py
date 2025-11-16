@@ -4,23 +4,14 @@
 import logging
 import traceback
 from concurrent import futures
-from typing import Generic
+from typing import Any, Generic, cast
 
 import grpc
 import gymnasium as gym
 import msgpack
 import numpy as np
 
-from containerl import (
-    AllowedSpaces,
-    CRLActType,
-    CRLObsType,
-    native_to_numpy,
-    native_to_numpy_vec,
-    numpy_to_native,
-    numpy_to_native_space,
-)
-from containerl.interface.proto_pb2 import (
+from ..proto_pb2 import (
     Empty,
     EnvironmentType,
     InitRequest,
@@ -31,9 +22,21 @@ from containerl.interface.proto_pb2 import (
     StepRequest,
     StepResponse,
 )
-from containerl.interface.proto_pb2_grpc import (
+from ..proto_pb2_grpc import (
     EnvironmentServiceServicer,
     add_EnvironmentServiceServicer_to_server,
+)
+from ..utils import (
+    AllowedSerializableTypes,
+    AllowedSpaces,
+    AllowedTypes,
+    CRLActType,
+    CRLObsType,
+    deserialize,
+    native_to_numpy,
+    native_to_numpy_vec,
+    numpy_to_native,
+    numpy_to_native_space,
 )
 
 
@@ -62,7 +65,7 @@ class EnvironmentServicer(Generic[CRLObsType, CRLActType], EnvironmentServiceSer
             # Prepare initialization arguments
             init_args = {}
             if request.HasField("init_args"):
-                init_args = msgpack.unpackb(request.init_args, raw=False)
+                init_args = deserialize(request.init_args, dict[str, Any])
 
             # Add render_mode to init_args if provided
             if request.HasField("render_mode"):
@@ -259,9 +262,12 @@ class EnvironmentServicer(Generic[CRLObsType, CRLActType], EnvironmentServiceSer
 
     def _get_serializable_observation(
         self, observation: dict[str, AllowedTypes]
-    ) -> dict[str, list[int | float] | int]:
+    ) -> dict[str, AllowedSerializableTypes]:
         if self.environment_type == EnvironmentType.VECTORIZED:
-            return {key: value.tolist() for key, value in observation.items()}
+            casted_observation = cast(
+                dict[str, np.ndarray], observation
+            )  # TODO: remove when dealing with VEC envs properly
+            return {key: value.tolist() for key, value in casted_observation.items()}
         else:
             return {
                 key: numpy_to_native(observation[key], space)

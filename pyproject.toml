@@ -78,6 +78,7 @@ reportMissingTypeArgument = "error"
 reportUntypedFunctionDecorator = "error"
 reportUntypedFunctionCall = "error"
 reportMissingTypeStubs = "none"
+extraPaths = ["stubs"]
 
 [tool.mypy]
 strict = true
