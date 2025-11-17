@@ -8,20 +8,21 @@ import numpy as np
 
 from containerl import (
     AllowedInfoValueTypes,
+    AllowedTypes,
     CRLEnvironment,
     create_environment_server,
     process_info,
 )
 
 
-class Environment(CRLEnvironment[dict[str, np.ndarray], int]):
+class Environment(CRLEnvironment[np.integer[Any]]):
     """Environment wrapper for Atari environments using Gymnasium and ALE."""
 
     def __init__(self) -> None:
         # Available Envs: https://ale.farama.org/environments/
         self.render_mode = "rgb_array"
         gym.register_envs(ale_py)
-        self._env: gym.Env[np.ndarray, int] = gym.make(  # pyright: ignore[reportUnknownMemberType]
+        self._env: gym.Env[np.ndarray, np.integer[Any]] = gym.make(  # pyright: ignore[reportUnknownMemberType]
             "ALE/Breakout-v5", render_mode=self.render_mode, obs_type="ram"
         )
 
@@ -31,20 +32,20 @@ class Environment(CRLEnvironment[dict[str, np.ndarray], int]):
 
         self.action_space = self._env.action_space
 
-    def _process_observation(self, obs: np.ndarray) -> dict[str, np.ndarray]:
+    def _process_observation(self, obs: np.ndarray) -> dict[str, AllowedTypes]:
         return {"observation": obs}
 
     def reset(
         self, *, seed: int | None = None, options: dict[str, Any] | None = None
-    ) -> tuple[dict[str, np.ndarray], dict[str, AllowedInfoValueTypes]]:
+    ) -> tuple[dict[str, AllowedTypes], dict[str, AllowedInfoValueTypes]]:
         """Reset the environment."""
         obs, info = self._env.reset(seed=seed, options=options)
         return self._process_observation(obs), process_info(info)
 
     def step(
-        self, action: int
+        self, action: np.integer[Any]
     ) -> tuple[
-        dict[str, np.ndarray], float, bool, bool, dict[str, AllowedInfoValueTypes]
+        dict[str, AllowedTypes], float, bool, bool, dict[str, AllowedInfoValueTypes]
     ]:
         """Take a step in the environment."""
         obs, reward, terminated, truncated, info = self._env.step(action)

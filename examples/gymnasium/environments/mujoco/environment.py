@@ -7,13 +7,14 @@ import numpy as np
 
 from containerl import (
     AllowedInfoValueTypes,
+    AllowedTypes,
     CRLEnvironment,
     create_environment_server,
     process_info,
 )
 
 
-class Environment(CRLEnvironment[dict[str, np.ndarray], np.ndarray]):
+class Environment(CRLEnvironment[np.ndarray]):
     """
     Gymnasium MuJoCo Environment Wrapper.
 
@@ -43,12 +44,12 @@ class Environment(CRLEnvironment[dict[str, np.ndarray], np.ndarray]):
 
         self.action_space = self._env.action_space
 
-    def _process_observation(self, obs: np.ndarray) -> dict[str, np.ndarray]:
+    def _process_observation(self, obs: np.ndarray) -> dict[str, AllowedTypes]:
         return {"observation": obs}
 
     def reset(
         self, *, seed: int | None = None, options: dict[str, Any] | None = None
-    ) -> tuple[dict[str, np.ndarray], dict[str, AllowedInfoValueTypes]]:
+    ) -> tuple[dict[str, AllowedTypes], dict[str, AllowedInfoValueTypes]]:
         """Reset the environment."""
         obs, info = self._env.reset(seed=seed, options=options)
         return self._process_observation(obs), process_info(info)
@@ -56,7 +57,7 @@ class Environment(CRLEnvironment[dict[str, np.ndarray], np.ndarray]):
     def step(
         self, action: np.ndarray
     ) -> tuple[
-        dict[str, np.ndarray], float, bool, bool, dict[str, AllowedInfoValueTypes]
+        dict[str, AllowedTypes], float, bool, bool, dict[str, AllowedInfoValueTypes]
     ]:
         """Take a step in the environment."""
         obs, reward, terminated, truncated, info = self._env.step(action)

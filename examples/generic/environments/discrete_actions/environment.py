@@ -14,7 +14,7 @@ from containerl import (
 )
 
 
-class Environment(CRLEnvironment[dict[str, AllowedTypes], np.integer[Any]]):
+class Environment(CRLEnvironment[np.integer[Any]]):
     """A simple discrete action environment with dictionary observations."""
 
     def __init__(self) -> None:

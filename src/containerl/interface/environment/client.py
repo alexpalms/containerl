@@ -24,7 +24,6 @@ from ..utils import (
     AllowedSerializableTypes,
     AllowedSpaces,
     AllowedTypes,
-    deserialize,
     native_to_numpy,
     native_to_numpy_space,
     native_to_numpy_vec,
@@ -117,10 +116,8 @@ class EnvironmentClient:
         reset_response = self.stub.Reset(reset_request)
 
         # Deserialize the observation and info
-        observation = deserialize(
-            reset_response.observation, Mapping[str, AllowedSerializableTypes]
-        )
-        info = deserialize(reset_response.info, dict[str, AllowedInfoValueTypes])
+        observation = msgpack.unpackb(reset_response.observation, raw=False)
+        info = msgpack.unpackb(reset_response.info, raw=False)
 
         # Convert lists back to numpy arrays for the observation
         numpy_observation = self._get_numpy_observation(observation)
@@ -153,13 +150,11 @@ class EnvironmentClient:
         step_response = self.stub.Step(step_request)
 
         # Deserialize the observation and info
-        observation = deserialize(
-            step_response.observation, Mapping[str, AllowedSerializableTypes]
-        )
-        reward = deserialize(step_response.reward, SupportsFloat)
-        terminated = deserialize(step_response.terminated, bool)
-        truncated = deserialize(step_response.truncated, bool)
-        info = deserialize(step_response.info, dict[str, AllowedInfoValueTypes])
+        observation = msgpack.unpackb(step_response.observation, raw=False)
+        reward = msgpack.unpackb(step_response.reward, raw=False)
+        terminated = msgpack.unpackb(step_response.terminated, raw=False)
+        truncated = msgpack.unpackb(step_response.truncated, raw=False)
+        info = msgpack.unpackb(step_response.info, raw=False)
 
         # Convert lists back to numpy arrays for the observation
         numpy_observation = self._get_numpy_observation(observation)

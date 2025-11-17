@@ -4,7 +4,7 @@
 import logging
 import traceback
 from concurrent import futures
-from typing import Any, Generic, cast
+from typing import Generic, cast
 
 import grpc
 import gymnasium as gym
@@ -31,8 +31,6 @@ from ..utils import (
     AllowedSpaces,
     AllowedTypes,
     CRLActType,
-    CRLObsType,
-    deserialize,
     native_to_numpy,
     native_to_numpy_vec,
     numpy_to_native,
@@ -40,18 +38,21 @@ from ..utils import (
 )
 
 
-class CRLEnvironment(gym.Env[CRLObsType, CRLActType]):
+class CRLEnvironment(gym.Env[dict[str, AllowedTypes], CRLActType]):
     """Abstract base class for Environments."""
 
 
-class EnvironmentServicer(Generic[CRLObsType, CRLActType], EnvironmentServiceServicer):
+class EnvironmentServicer(
+    EnvironmentServiceServicer,
+    Generic[CRLActType],
+):
     """gRPC servicer that wraps the GymEnvironment."""
 
     def __init__(
         self,
-        environment_class: type[CRLEnvironment[CRLObsType, CRLActType]],
+        environment_class: type[CRLEnvironment[CRLActType]],
     ) -> None:
-        self.env: CRLEnvironment[CRLObsType, CRLActType] | None = None
+        self.env: CRLEnvironment[AllowedTypes] | None = None
         self.environment_class = environment_class
         self.environment_type: EnvironmentType | None = None
         self.num_envs: int | None = None
@@ -65,7 +66,7 @@ class EnvironmentServicer(Generic[CRLObsType, CRLActType], EnvironmentServiceSer
             # Prepare initialization arguments
             init_args = {}
             if request.HasField("init_args"):
-                init_args = deserialize(request.init_args, dict[str, Any])
+                init_args = msgpack.unpackb(request.init_args, raw=False)
 
             # Add render_mode to init_args if provided
             if request.HasField("render_mode"):
@@ -276,7 +277,7 @@ class EnvironmentServicer(Generic[CRLObsType, CRLActType], EnvironmentServiceSer
 
 
 def create_environment_server(
-    environment_class: type[CRLEnvironment[CRLObsType, CRLActType]],
+    environment_class: type[CRLEnvironment[CRLActType]],
     port: int = 50051,
 ) -> None:
     """Start the gRPC server."""

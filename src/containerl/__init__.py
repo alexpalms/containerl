@@ -2,7 +2,7 @@ __version__ = "0.1.0"
 from . import cli
 from .interface.agent.client import AgentClient
 from .interface.agent.client import main as validate_agent_connection
-from .interface.agent.server_factory import create_agent_server
+from .interface.agent.server_factory import CRLAgent, create_agent_server
 from .interface.environment.client import EnvironmentClient
 from .interface.environment.client import (
     main as validate_environment_connection,
@@ -41,7 +41,6 @@ from .interface.utils import (
     AllowedSpaces,
     AllowedTypes,
     CRLActType,
-    CRLObsType,
     native_to_numpy,
     native_to_numpy_space,
     native_to_numpy_vec,
@@ -86,8 +85,8 @@ __all__ = [
     "AllowedSpaces",
     "AllowedTypes",
     "AllowedInfoValueTypes",
-    "CRLObsType",
     "CRLActType",
     "process_info",
     "AllowedSerializableTypes",
+    "CRLAgent",
 ]

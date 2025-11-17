@@ -1,29 +1,18 @@
 """Utility functions for converting between Gymnasium spaces and protobuf representations."""
 
-from collections.abc import Mapping
 from typing import Any, TypeVar, cast
 
-import msgpack
 import numpy as np
 from gymnasium import spaces
 
 from .proto_pb2 import Space
-
-T = TypeVar("T")
 
 AllowedTypes = np.ndarray | np.integer[Any]
 AllowedSerializableTypes = list[int | float] | int
 AllowedSpaces = spaces.Space[AllowedTypes]
 AllowedInfoBaseTypes = str | bool | int | float
 AllowedInfoValueTypes = AllowedInfoBaseTypes | list[AllowedInfoBaseTypes]
-CRLObsType = TypeVar("CRLObsType", bound=Mapping[str, AllowedTypes])
 CRLActType = TypeVar("CRLActType", bound=AllowedTypes)
-
-
-def deserialize(data: bytes, cls: type[T]) -> T:
-    """Deserialize bytes to an object using msgpack."""
-    raw = msgpack.unpackb(data, raw=False)
-    return cls(**raw) if isinstance(raw, dict) else raw
 
 
 def numpy_to_native_space(space: AllowedSpaces, space_proto: Space) -> None:
@@ -166,9 +155,5 @@ def process_info(info: dict[str, Any]) -> dict[str, AllowedInfoValueTypes]:
                     processed.append(item)
             # Convert back to the original type (list or tuple)
             info[key] = processed
-        else:
-            raise ValueError(
-                f"Unsupported info value type: {type(value)} for key: {key}"
-            )
 
     return info

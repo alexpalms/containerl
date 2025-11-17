@@ -14,7 +14,7 @@ from containerl import (
 )
 
 
-class Environment(CRLEnvironment[dict[str, AllowedTypes], np.ndarray]):
+class Environment(CRLEnvironment[np.ndarray]):
     """A simple multi-binary action environment with dictionary observations."""
 
     def __init__(self) -> None:
