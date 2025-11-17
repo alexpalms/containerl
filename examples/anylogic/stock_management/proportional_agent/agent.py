@@ -1,16 +1,13 @@
 """Simple proportional Agent for Anylogic stock problem."""
 
-from typing import cast
-
 import numpy as np
 from gymnasium import spaces
 
-from containerl.interface import create_agent_server
-from containerl.interface.utils import Agent as BaseAgent
-from containerl.interface.utils import AllowedTypes
+from containerl import AllowedTypes, create_agent_server
+from containerl import CRLAgent as BaseAgent
 
 
-class Agent(BaseAgent[dict[str, AllowedTypes], np.ndarray]):
+class Agent(BaseAgent[np.ndarray]):
     """Simple proportional Agent for Anylogic stock problem."""
 
     def __init__(self) -> None:
@@ -41,4 +38,4 @@ class Agent(BaseAgent[dict[str, AllowedTypes], np.ndarray]):
 
 if __name__ == "__main__":
     agent = Agent()
-    create_agent_server(cast(BaseAgent[dict[str, AllowedTypes], AllowedTypes], agent))
+    create_agent_server(agent)

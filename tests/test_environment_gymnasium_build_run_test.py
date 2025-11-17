@@ -4,10 +4,8 @@ import logging
 
 import pytest
 
+from containerl import validate_environment_connection
 from containerl.cli import build_run, stop_container
-from containerl.interface.environment.client import (
-    main as validate_environment_connection,
-)
 
 # Define environments and their build configurations
 TEST_CASES = [

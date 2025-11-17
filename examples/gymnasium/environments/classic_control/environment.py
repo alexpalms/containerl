@@ -1,19 +1,20 @@
 """Classic Control Environments from Gymnasium wrapped for Containerl."""
 
-from typing import Any, cast
+from typing import Any
 
 import gymnasium as gym
 import numpy as np
 
-from containerl.interface import create_environment_server
-from containerl.interface.utils import (
-    AllowedInfoBaseTypes,
+from containerl import (
     AllowedInfoValueTypes,
     AllowedTypes,
+    CRLEnvironment,
+    create_environment_server,
+    process_info,
 )
 
 
-class Environment(gym.Env[dict[str, np.ndarray], int]):
+class Environment(CRLEnvironment[np.integer[Any]]):
     """
     Gymnasium Classic Control Environment Wrapper.
 
@@ -27,7 +28,7 @@ class Environment(gym.Env[dict[str, np.ndarray], int]):
 
     def __init__(self) -> None:
         self.render_mode = "rgb_array"
-        self._env: gym.Env[np.ndarray, int] = gym.make(  # pyright: ignore[reportUnknownMemberType]
+        self._env: gym.Env[np.ndarray, np.integer[Any]] = gym.make(  # pyright: ignore[reportUnknownMemberType]
             "CartPole-v1", render_mode=self.render_mode
         )
 
@@ -37,46 +38,20 @@ class Environment(gym.Env[dict[str, np.ndarray], int]):
 
         self.action_space = self._env.action_space
 
-    def _process_observation(self, obs: np.ndarray) -> dict[str, np.ndarray]:
+    def _process_observation(self, obs: np.ndarray) -> dict[str, AllowedTypes]:
         return {"observation": obs}
-
-    def _process_info(self, info: dict[str, Any]) -> dict[str, AllowedInfoValueTypes]:
-        for key, value in info.items():
-            if isinstance(value, np.ndarray):
-                info[key] = value.tolist()
-            elif isinstance(value, np.number):  # Catches all numeric types (int, float)
-                info[key] = value.item()  # .item() converts to native Python type
-            elif isinstance(value, np.bool_):
-                info[key] = bool(cast(bool, value))
-            elif isinstance(value, (list, tuple)):
-                value = cast(list[AllowedInfoBaseTypes], value)
-                # Process lists and tuples that might contain numpy types
-                processed: list[AllowedInfoValueTypes] = []
-                for item in value:
-                    if isinstance(item, np.ndarray):
-                        processed.append(item.tolist())
-                    elif isinstance(item, np.integer) or isinstance(item, np.floating):
-                        processed.append(item.item())
-                    elif isinstance(item, np.bool_):
-                        processed.append(bool(item))
-                    else:
-                        processed.append(item)
-                # Convert back to the original type (list or tuple)
-                info[key] = processed
-
-        return info
 
     def reset(
         self, *, seed: int | None = None, options: dict[str, Any] | None = None
-    ) -> tuple[dict[str, np.ndarray], dict[str, AllowedInfoValueTypes]]:
+    ) -> tuple[dict[str, AllowedTypes], dict[str, AllowedInfoValueTypes]]:
         """Reset the environment."""
         obs, info = self._env.reset(seed=seed, options=options)
-        return self._process_observation(obs), info
+        return self._process_observation(obs), process_info(info)
 
     def step(
-        self, action: int
+        self, action: np.integer[Any]
     ) -> tuple[
-        dict[str, np.ndarray], float, bool, bool, dict[str, AllowedInfoValueTypes]
+        dict[str, AllowedTypes], float, bool, bool, dict[str, AllowedInfoValueTypes]
     ]:
         """Take a step in the environment."""
         obs, reward, terminated, truncated, info = self._env.step(action)
@@ -85,7 +60,7 @@ class Environment(gym.Env[dict[str, np.ndarray], int]):
             float(reward),
             terminated,
             truncated,
-            self._process_info(info),
+            process_info(info),
         )
 
     def render(self) -> np.ndarray:  # type: ignore[override]
@@ -98,6 +73,4 @@ class Environment(gym.Env[dict[str, np.ndarray], int]):
 
 
 if __name__ == "__main__":
-    create_environment_server(
-        cast(type[gym.Env[dict[str, AllowedTypes], AllowedTypes]], Environment)
-    )
+    create_environment_server(Environment)

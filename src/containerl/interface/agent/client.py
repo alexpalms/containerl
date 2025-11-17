@@ -4,21 +4,21 @@ import logging
 
 import grpc
 import msgpack
-from gymnasium import Env, spaces
+from gymnasium import spaces
 from gymnasium.core import ActType, ObsType
 
-from containerl.interface.proto_pb2 import Empty, ObservationRequest
+from ..proto_pb2 import Empty, ObservationRequest
 
 # Add the interface directory to the path to import the generated gRPC code
-from containerl.interface.proto_pb2_grpc import AgentServiceStub
-from containerl.interface.utils import (
+from ..proto_pb2_grpc import AgentServiceStub
+from ..utils import (
     native_to_numpy,
     native_to_numpy_space,
     numpy_to_native,
 )
 
 
-class AgentClient(Env):
+class AgentClient:
     """
     A Gym environment compatible agent that connects to a remote environment via gRPC.
 
@@ -32,11 +32,11 @@ class AgentClient(Env):
         try:
             # Wait for the channel to be ready
             grpc.channel_ready_future(self.channel).result(timeout=timeout)
-        except grpc.FutureTimeoutError:
+        except grpc.FutureTimeoutError as err:
             self.channel.close()
             raise TimeoutError(
                 f"Could not connect to server at {server_address} within {timeout} seconds"
-            )
+            ) from err
 
         self.stub = AgentServiceStub(self.channel)
 

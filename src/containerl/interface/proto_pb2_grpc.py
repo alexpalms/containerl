@@ -3,7 +3,7 @@
 
 import grpc
 
-import containerl.interface.proto_pb2 as proto__pb2
+from . import proto_pb2 as proto__pb2
 
 GRPC_GENERATED_VERSION = "1.74.0"
 GRPC_VERSION = grpc.__version__

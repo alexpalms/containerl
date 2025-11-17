@@ -1,17 +1,20 @@
 """A simple multi-discrete action environment with dictionary observations."""
 
 import random
-from typing import Any, cast
+from typing import Any
 
-import gymnasium as gym
 import numpy as np
 from gymnasium import spaces
 
-from containerl.interface import create_environment_server
-from containerl.interface.utils import AllowedInfoValueTypes, AllowedTypes
+from containerl import (
+    AllowedInfoValueTypes,
+    AllowedTypes,
+    CRLEnvironment,
+    create_environment_server,
+)
 
 
-class Environment(gym.Env[dict[str, AllowedTypes], np.ndarray]):
+class Environment(CRLEnvironment[np.ndarray]):
     """A simple multi-discrete action environment with dictionary observations."""
 
     def __init__(self) -> None:
@@ -83,6 +86,4 @@ class Environment(gym.Env[dict[str, AllowedTypes], np.ndarray]):
 
 
 if __name__ == "__main__":
-    create_environment_server(
-        cast(type[gym.Env[dict[str, AllowedTypes], AllowedTypes]], Environment)
-    )
+    create_environment_server(Environment)

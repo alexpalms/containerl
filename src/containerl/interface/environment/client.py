@@ -1,24 +1,29 @@
 """Client for connecting to a remote environment via gRPC."""
 
 import logging
-from typing import Any, SupportsFloat
+from collections.abc import Mapping
+from typing import Any, SupportsFloat, cast
 
 import grpc
 import msgpack
 import numpy as np
-from gymnasium import Env, spaces
-from gymnasium.core import ActType, ObsType, RenderFrame
+from gymnasium import spaces
+from gymnasium.core import RenderFrame
 
 # Add the interface directory to the path to import the generated gRPC code
-from containerl.interface.proto_pb2 import (
+from ..proto_pb2 import (
     Empty,
     EnvironmentType,
     InitRequest,
     ResetRequest,
     StepRequest,
 )
-from containerl.interface.proto_pb2_grpc import EnvironmentServiceStub
-from containerl.interface.utils import (
+from ..proto_pb2_grpc import EnvironmentServiceStub
+from ..utils import (
+    AllowedInfoValueTypes,
+    AllowedSerializableTypes,
+    AllowedSpaces,
+    AllowedTypes,
     native_to_numpy,
     native_to_numpy_space,
     native_to_numpy_vec,
@@ -26,7 +31,7 @@ from containerl.interface.utils import (
 )
 
 
-class EnvironmentClient(Env):
+class EnvironmentClient:
     """
     A Gym environment that connects to a remote environment via gRPC.
 
@@ -45,18 +50,18 @@ class EnvironmentClient(Env):
         server_address: str,
         timeout: float = 60.0,
         render_mode: str | None = None,
-        **init_args,
+        **init_args: dict[str, Any],
     ) -> None:
         # Connect to the gRPC server with timeout
         self.channel = grpc.insecure_channel(server_address)
         try:
             # Wait for the channel to be ready
             grpc.channel_ready_future(self.channel).result(timeout=timeout)
-        except grpc.FutureTimeoutError:
+        except grpc.FutureTimeoutError as err:
             self.channel.close()
             raise TimeoutError(
                 f"Could not connect to server at {server_address} within {timeout} seconds"
-            )
+            ) from err
 
         self.stub = EnvironmentServiceStub(self.channel)
 
@@ -72,7 +77,7 @@ class EnvironmentClient(Env):
         spaces_response = self.stub.Init(init_request)
 
         # Set up observation space
-        space_dict = {}
+        space_dict: dict[str, AllowedSpaces] = {}
         for name, proto_space in spaces_response.observation_space.items():
             space_dict[name] = native_to_numpy_space(proto_space)
         self.observation_space = spaces.Dict(space_dict)
@@ -97,7 +102,7 @@ class EnvironmentClient(Env):
 
     def reset(
         self, *, seed: int | None = None, options: dict[str, Any] | None = None
-    ) -> tuple[ObsType, dict[str, Any]]:
+    ) -> tuple[Mapping[str, AllowedTypes], dict[str, AllowedInfoValueTypes]]:
         """Reset the environment and return the initial observation."""
         reset_request = ResetRequest()
 
@@ -120,8 +125,14 @@ class EnvironmentClient(Env):
         return numpy_observation, info
 
     def step(
-        self, action: ActType
-    ) -> tuple[ObsType, SupportsFloat, bool, bool, dict[str, Any]]:
+        self, action: AllowedTypes
+    ) -> tuple[
+        Mapping[str, AllowedTypes],
+        SupportsFloat,
+        bool,
+        bool,
+        dict[str, AllowedInfoValueTypes],
+    ]:
         """Take a step in the environment."""
         # Convert NumPy arrays to lists for serialization
         if self.environment_type == EnvironmentType.VECTORIZED:
@@ -147,6 +158,7 @@ class EnvironmentClient(Env):
 
         # Convert lists back to numpy arrays for the observation
         numpy_observation = self._get_numpy_observation(observation)
+        # TODO: Resolve when properly dealing with VEC envs
         if self.environment_type == EnvironmentType.VECTORIZED:
             reward = np.array(reward, dtype=np.float32).reshape(self.num_envs)
             terminated = np.array(terminated, dtype=bool).reshape(self.num_envs)
@@ -180,7 +192,7 @@ class EnvironmentClient(Env):
             # Just return it as a string
             return render_response.render_data.decode("utf-8")
 
-    def close(self):
+    def close(self) -> None:
         """Close the environment."""
         # Create the request
         close_request = Empty()
@@ -191,14 +203,21 @@ class EnvironmentClient(Env):
         # Close the gRPC channel
         self.channel.close()
 
-    def _get_numpy_observation(self, observation):
+    def _get_numpy_observation(
+        self, observation: Mapping[str, AllowedSerializableTypes]
+    ) -> Mapping[str, AllowedTypes]:
         if self.environment_type == EnvironmentType.VECTORIZED:
-            return {
+            casted_observation = cast(
+                dict[str, list[float | int]], observation
+            )  # TODO: remove when dealing with VEC envs properly
+            processed_obs = {
                 key: native_to_numpy_vec(
                     value, self.observation_space[key], self.num_envs
                 )
-                for key, value in observation.items()
+                for key, value in casted_observation.items()
             }
+            return processed_obs
+
         else:
             return {
                 key: native_to_numpy(value, self.observation_space[key])

@@ -4,13 +4,14 @@
 import logging
 import traceback
 from concurrent import futures
+from typing import Generic, cast
 
 import grpc
 import gymnasium as gym
 import msgpack
 import numpy as np
 
-from containerl.interface.proto_pb2 import (
+from ..proto_pb2 import (
     Empty,
     EnvironmentType,
     InitRequest,
@@ -21,13 +22,15 @@ from containerl.interface.proto_pb2 import (
     StepRequest,
     StepResponse,
 )
-from containerl.interface.proto_pb2_grpc import (
+from ..proto_pb2_grpc import (
     EnvironmentServiceServicer,
     add_EnvironmentServiceServicer_to_server,
 )
-from containerl.interface.utils import (
+from ..utils import (
+    AllowedSerializableTypes,
     AllowedSpaces,
     AllowedTypes,
+    CRLActType,
     native_to_numpy,
     native_to_numpy_vec,
     numpy_to_native,
@@ -35,14 +38,21 @@ from containerl.interface.utils import (
 )
 
 
-class EnvironmentServicer(EnvironmentServiceServicer):
+class CRLEnvironment(gym.Env[dict[str, AllowedTypes], CRLActType]):
+    """Abstract base class for Environments."""
+
+
+class EnvironmentServicer(
+    EnvironmentServiceServicer,
+    Generic[CRLActType],
+):
     """gRPC servicer that wraps the GymEnvironment."""
 
     def __init__(
         self,
-        environment_class: type[gym.Env[dict[str, AllowedTypes], AllowedTypes]],
+        environment_class: type[CRLEnvironment[CRLActType]],
     ) -> None:
-        self.env: gym.Env[dict[str, AllowedTypes], AllowedTypes] | None = None
+        self.env: CRLEnvironment[AllowedTypes] | None = None
         self.environment_class = environment_class
         self.environment_type: EnvironmentType | None = None
         self.num_envs: int | None = None
@@ -253,9 +263,12 @@ class EnvironmentServicer(EnvironmentServiceServicer):
 
     def _get_serializable_observation(
         self, observation: dict[str, AllowedTypes]
-    ) -> dict[str, list[int | float] | int]:
+    ) -> dict[str, AllowedSerializableTypes]:
         if self.environment_type == EnvironmentType.VECTORIZED:
-            return {key: value.tolist() for key, value in observation.items()}
+            casted_observation = cast(
+                dict[str, np.ndarray], observation
+            )  # TODO: remove when dealing with VEC envs properly
+            return {key: value.tolist() for key, value in casted_observation.items()}
         else:
             return {
                 key: numpy_to_native(observation[key], space)
@@ -264,7 +277,7 @@ class EnvironmentServicer(EnvironmentServiceServicer):
 
 
 def create_environment_server(
-    environment_class: type[gym.Env[dict[str, AllowedTypes], AllowedTypes]],
+    environment_class: type[CRLEnvironment[CRLActType]],
     port: int = 50051,
 ) -> None:
     """Start the gRPC server."""

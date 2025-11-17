@@ -2,7 +2,7 @@ import gymnasium as gym
 import numpy as np
 from gymnasium import spaces
 
-from containerl.interface import create_environment_server
+from containerl import create_environment_server
 
 
 class Environment(gym.Env):

@@ -1,8 +1,9 @@
+import gymnasium as gym
 import numpy as np
 from gymnasium import spaces
-import gymnasium as gym
 
-from containerl.interface import create_environment_server
+from containerl import create_environment_server
+
 
 class Environment(gym.Env):
     def __init__(self, num_envs=1):
@@ -29,14 +30,26 @@ class Environment(gym.Env):
 
     def step(self, action):
         # Expect action shape to be (num_envs, 1)
-        assert isinstance(action, np.ndarray), f"Action must be numpy array, got {type(action)}"
-        assert action.shape == (self.num_envs, *self.action_space.shape), f"Action shape must be ({self.num_envs}, {self.action_space.shape}), got {action.shape}"
+        assert isinstance(action, np.ndarray), (
+            f"Action must be numpy array, got {type(action)}"
+        )
+        assert action.shape == (self.num_envs, *self.action_space.shape), (
+            f"Action shape must be ({self.num_envs}, {self.action_space.shape}), got {action.shape}"
+        )
         # Check each action individually
         for i, single_action in enumerate(action):
-            assert self.action_space.contains(single_action), f"Action {single_action} at index {i} not in action space {self.action_space}"
+            assert self.action_space.contains(single_action), (
+                f"Action {single_action} at index {i} not in action space {self.action_space}"
+            )
 
         self.env_step += 1
-        return self.get_observation(), self.get_reward(), self.get_episode_termination(), self.get_episode_abortion(), self.get_info()
+        return (
+            self.get_observation(),
+            self.get_reward(),
+            self.get_episode_termination(),
+            self.get_episode_abortion(),
+            self.get_info(),
+        )
 
     def get_observation(self):
         return {
@@ -62,6 +75,7 @@ class Environment(gym.Env):
 
     def close(self):
         pass
+
 
 if __name__ == "__main__":
     create_environment_server(Environment)
