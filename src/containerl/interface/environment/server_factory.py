@@ -3,6 +3,7 @@
 # gRPC Server Implementation
 import logging
 import traceback
+from abc import abstractmethod
 from concurrent import futures
 from typing import Generic, cast
 
@@ -40,6 +41,24 @@ from ..utils import (
 
 class CRLEnvironment(gym.Env[dict[str, AllowedTypes], CRLActType]):
     """Abstract base class for Environments."""
+
+    @abstractmethod
+    def render(self) -> np.ndarray | None:
+        """Render the environment and return an image as a numpy array if applicable."""
+        pass
+
+
+class CRLVecEnvironment(gym.Env[dict[str, AllowedTypes], CRLActType]):
+    """Abstract base class for Vectorized Environments."""
+
+    num_envs: int
+
+    # TODO: add step and reset methods
+
+    @abstractmethod
+    def render(self) -> np.ndarray | None:
+        """Render the environment and return an image as a numpy array if applicable."""
+        pass
 
 
 class EnvironmentServicer(

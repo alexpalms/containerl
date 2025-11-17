@@ -8,7 +8,6 @@ import grpc
 import msgpack
 import numpy as np
 from gymnasium import spaces
-from gymnasium.core import RenderFrame
 
 # Add the interface directory to the path to import the generated gRPC code
 from ..proto_pb2 import (
@@ -166,7 +165,7 @@ class EnvironmentClient:
 
         return (numpy_observation, reward, terminated, truncated, info)
 
-    def render(self) -> RenderFrame | list[RenderFrame] | str | None:
+    def render(self) -> np.ndarray | None:
         """Render the environment."""
         # Create the request
         render_request = Empty()
