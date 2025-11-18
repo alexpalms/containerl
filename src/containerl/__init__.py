@@ -11,6 +11,10 @@ from .interface.environment.server_factory import (
     CRLEnvironment,
     create_environment_server,
 )
+from .interface.environment.server_factory_vec import (
+    CRLVecEnvironment,
+    create_vec_environment_server,
+)
 from .interface.proto_pb2 import (
     ActionResponse,
     Empty,
@@ -69,6 +73,8 @@ __all__ = [
     "ObservationRequest",
     "ActionResponse",
     "create_environment_server",
+    "create_vec_environment_server",
+    "CRLVecEnvironment",
     "add_EnvironmentServiceServicer_to_server",
     "CRLEnvironment",
     "create_agent_server",

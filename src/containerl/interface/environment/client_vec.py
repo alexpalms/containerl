@@ -8,6 +8,7 @@ import grpc
 import msgpack
 import numpy as np
 from gymnasium import spaces
+from numpy.typing import NDArray
 
 # Add the interface directory to the path to import the generated gRPC code
 from ..proto_pb2 import (
@@ -25,6 +26,7 @@ from ..utils import (
     AllowedTypes,
     native_to_numpy,
     native_to_numpy_space,
+    native_to_numpy_vec,
     numpy_to_native,
 )
 
@@ -84,13 +86,12 @@ class EnvironmentClient:
         self.action_space = native_to_numpy_space(spaces_response.action_space)
 
         # Set up number of environments
-        self.num_envs = spaces_response.num_envs
+        if spaces_response.environment_type == EnvironmentType.VECTORIZED:
+            self.num_envs = spaces_response.num_envs
+        else:
+            self.num_envs = 1
+
         self.environment_type = spaces_response.environment_type
-        if self.environment_type != EnvironmentType.STANDARD:
-            raise Exception(
-                "EnvironmentClient only supports STANDARD environments. "
-                "For VECTORIZED environments, please use EnvironmentClientVec."
-            )
 
         # Store render mode
         self.render_mode = (
@@ -102,8 +103,8 @@ class EnvironmentClient:
     def reset(
         self, *, seed: int | None = None, options: dict[str, Any] | None = None
     ) -> tuple[
-        Mapping[str, AllowedTypes],
-        Mapping[str, AllowedInfoValueTypes],
+        Mapping[str, AllowedTypes | NDArray[np.floating | np.integer[Any]]],
+        Mapping[str, AllowedInfoValueTypes] | list[dict[str, AllowedInfoValueTypes]],
     ]:
         """Reset the environment and return the initial observation."""
         reset_request = ResetRequest()
@@ -133,11 +134,11 @@ class EnvironmentClient:
     def step(
         self, action: AllowedTypes
     ) -> tuple[
-        Mapping[str, AllowedTypes],
-        SupportsFloat,
-        bool,
-        bool,
-        Mapping[str, AllowedInfoValueTypes],
+        Mapping[str, AllowedTypes | NDArray[np.floating | np.integer[Any]]],
+        SupportsFloat | NDArray[np.floating],
+        bool | NDArray[np.bool_],
+        bool | NDArray[np.bool_],
+        Mapping[str, AllowedInfoValueTypes] | list[Mapping[str, AllowedInfoValueTypes]],
     ]:
         """Take a step in the environment."""
         # Convert NumPy arrays to lists for serialization
@@ -159,15 +160,25 @@ class EnvironmentClient:
         observation: Mapping[str, AllowedSerializableTypes] = msgpack.unpackb(
             step_response.observation, raw=False
         )
-        reward: SupportsFloat = msgpack.unpackb(step_response.reward, raw=False)
-        terminated: bool = msgpack.unpackb(step_response.terminated, raw=False)
-        truncated: bool = msgpack.unpackb(step_response.truncated, raw=False)
-        info: Mapping[str, AllowedInfoValueTypes] = msgpack.unpackb(
-            step_response.info, raw=False
+        reward: SupportsFloat | NDArray[np.floating] = msgpack.unpackb(
+            step_response.reward, raw=False
         )
+        terminated: bool | NDArray[np.bool_] = msgpack.unpackb(
+            step_response.terminated, raw=False
+        )
+        truncated: bool | NDArray[np.bool_] = msgpack.unpackb(
+            step_response.truncated, raw=False
+        )
+        info: (
+            Mapping[str, AllowedInfoValueTypes] | list[dict[str, AllowedInfoValueTypes]]
+        ) = msgpack.unpackb(step_response.info, raw=False)
 
         # Convert lists back to numpy arrays for the observation
         numpy_observation = self._get_numpy_observation(observation)
+        if self.environment_type == EnvironmentType.VECTORIZED:
+            reward = np.array(reward, dtype=np.float32).reshape(self.num_envs)
+            terminated = np.array(terminated, dtype=bool).reshape(self.num_envs)
+            truncated = np.array(truncated, dtype=bool).reshape(self.num_envs)
 
         return (numpy_observation, reward, terminated, truncated, info)
 
@@ -192,8 +203,10 @@ class EnvironmentClient:
             )
             array = array.reshape(render_data["shape"])
             return array
-        except Exception as err:
-            raise Exception("Failed to deserialize render data from server") from err
+        except Exception:
+            # If it's not msgpack data, it might be plain text or other format
+            # Just return it as a string
+            return render_response.render_data.decode("utf-8")
 
     def close(self) -> None:
         """Close the environment."""
@@ -208,11 +221,23 @@ class EnvironmentClient:
 
     def _get_numpy_observation(
         self, observation: Mapping[str, AllowedSerializableTypes]
-    ) -> Mapping[str, AllowedTypes]:
-        return {
-            key: native_to_numpy(value, self.observation_space[key])
-            for key, value in observation.items()
-        }
+    ) -> (
+        Mapping[str, AllowedTypes]
+        | Mapping[str, NDArray[np.floating | np.integer[Any]]]
+    ):
+        if self.environment_type == EnvironmentType.VECTORIZED:
+            return {
+                key: native_to_numpy_vec(
+                    value, self.observation_space[key], self.num_envs
+                )
+                for key, value in observation.items()
+            }
+
+        else:
+            return {
+                key: native_to_numpy(value, self.observation_space[key])
+                for key, value in observation.items()
+            }
 
 
 def main(server_address: str = "localhost:50051", num_steps: int = 5) -> None:
@@ -230,14 +255,29 @@ def main(server_address: str = "localhost:50051", num_steps: int = 5) -> None:
 
         # Reset the environment
         obs, info = env.reset()
-        if not env.observation_space.contains(obs):
-            logger.error(f"Initial observation is not of type {env.observation_space}")
+        if env.environment_type == EnvironmentType.VECTORIZED:
+            for key, value in obs.items():
+                for i in range(env.num_envs):
+                    if not env.observation_space[key].contains(value[i]):
+                        logger.error(
+                            f"Initial observation is not of type {env.observation_space[key]}"
+                        )
+        else:
+            if not env.observation_space.contains(obs):
+                logger.error(
+                    f"Initial observation is not of type {env.observation_space}"
+                )
         logger.info(f"Initial observation: {obs}")
         logger.info(f"Initial info: {info}")
 
         # Run a few steps
-        for _ in range(num_steps):
-            action = env.action_space.sample()  # Random action
+        for i in range(num_steps):
+            if env.environment_type == EnvironmentType.VECTORIZED:
+                action = np.stack(
+                    [env.action_space.sample() for _ in range(env.num_envs)]
+                )
+            else:
+                action = env.action_space.sample()  # Random action
             if env.render_mode == "rgb_array":
                 frame = env.render()
                 assert isinstance(frame, np.ndarray), (
@@ -248,8 +288,16 @@ def main(server_address: str = "localhost:50051", num_steps: int = 5) -> None:
                 )
                 logger.info("Rendering works as expected")
             obs, reward, terminated, truncated, info = env.step(action)
-            if not env.observation_space.contains(obs):
-                logger.error(f"Observation is not of type {env.observation_space}")
+            if env.environment_type == EnvironmentType.VECTORIZED:
+                for key, value in obs.items():
+                    for i in range(env.num_envs):
+                        if not env.observation_space[key].contains(value[i]):
+                            logger.error(
+                                f"Observation is not of type {env.observation_space[key]}"
+                            )
+            else:
+                if not env.observation_space.contains(obs):
+                    logger.error(f"Observation is not of type {env.observation_space}")
 
             logger.info(f"Observation: {obs}")
             logger.info(f"Info: {info}")
@@ -258,7 +306,10 @@ def main(server_address: str = "localhost:50051", num_steps: int = 5) -> None:
             logger.info(f"Terminated: {terminated}")
             logger.info(f"Truncated: {truncated}")
 
-            done = terminated or truncated
+            if env.environment_type == EnvironmentType.VECTORIZED:
+                done = np.any(terminated) or np.any(truncated)
+            else:
+                done = terminated or truncated
             if done:
                 obs, info = env.reset()
 

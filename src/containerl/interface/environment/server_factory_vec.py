@@ -5,12 +5,13 @@ import logging
 import traceback
 from abc import abstractmethod
 from concurrent import futures
-from typing import Any, Generic, SupportsFloat
+from typing import Any, Generic
 
 import grpc
 import gymnasium as gym
 import msgpack
 import numpy as np
+from numpy.typing import NDArray
 
 from ..proto_pb2 import (
     Empty,
@@ -33,34 +34,37 @@ from ..utils import (
     AllowedSpaces,
     AllowedTypes,
     CRLActType,
-    native_to_numpy,
-    numpy_to_native,
+    native_to_numpy_vec,
     numpy_to_native_space,
 )
 
 
-class CRLEnvironment(gym.Env[dict[str, AllowedTypes], CRLActType]):
-    """Abstract base class for Environments."""
+class CRLVecEnvironment(
+    gym.Env[dict[str, NDArray[np.floating | np.integer[Any]]], CRLActType]
+):
+    """Abstract base class for Vectorized Environments."""
+
+    num_envs: int
 
     @abstractmethod
-    def reset(
+    def reset(  # pyright: ignore[reportIncompatibleMethodOverride]
         self, *, seed: int | None = None, options: dict[str, Any] | None = None
     ) -> tuple[
-        dict[str, AllowedTypes],
-        dict[str, AllowedInfoValueTypes],
+        dict[str, NDArray[np.floating | np.integer[Any]]],
+        list[dict[str, AllowedInfoValueTypes]],
     ]:
         """Reset the environment."""
         pass
 
     @abstractmethod
-    def step(
+    def step(  # pyright: ignore[reportIncompatibleMethodOverride]
         self, action: CRLActType
     ) -> tuple[
-        dict[str, AllowedTypes],
-        SupportsFloat,
-        bool,
-        bool,
-        dict[str, AllowedInfoValueTypes],
+        dict[str, NDArray[np.floating | np.integer[Any]]],
+        NDArray[np.floating],
+        NDArray[np.bool_],
+        NDArray[np.bool_],
+        list[dict[str, AllowedInfoValueTypes]],
     ]:
         """Take a step in the environment."""
         pass
@@ -71,7 +75,7 @@ class CRLEnvironment(gym.Env[dict[str, AllowedTypes], CRLActType]):
         pass
 
 
-class EnvironmentServicer(
+class EnvironmentServicerVec(
     EnvironmentServiceServicer,
     Generic[CRLActType],
 ):
@@ -79,11 +83,11 @@ class EnvironmentServicer(
 
     def __init__(
         self,
-        environment_class: type[CRLEnvironment[CRLActType]],
+        environment_class: type[CRLVecEnvironment[CRLActType]],
     ) -> None:
-        self.env: CRLEnvironment[AllowedTypes] | None = None
+        self.env: CRLVecEnvironment[AllowedTypes] | None = None
         self.environment_class = environment_class
-        self.environment_type: EnvironmentType = EnvironmentType.STANDARD
+        self.environment_type: EnvironmentType = EnvironmentType.VECTORIZED
         self.num_envs: int = 1
         self.space_type_map: dict[str, AllowedSpaces] = {}
 
@@ -95,7 +99,9 @@ class EnvironmentServicer(
             # Prepare initialization arguments
             init_args = {}
             if request.HasField("init_args"):
-                init_args = msgpack.unpackb(request.init_args, raw=False)
+                init_args: dict[str, Any] = msgpack.unpackb(
+                    request.init_args, raw=False
+                )
 
             # Add render_mode to init_args if provided
             if request.HasField("render_mode"):
@@ -125,6 +131,7 @@ class EnvironmentServicer(
                     )
             numpy_to_native_space(action_space, response.action_space)
 
+            self.num_envs = self.env.num_envs
             response.num_envs = self.num_envs
             response.environment_type = self.environment_type
             response.render_mode = (
@@ -157,7 +164,7 @@ class EnvironmentServicer(
             if request.HasField("seed"):
                 seed = request.seed
 
-            options = None
+            options: dict[str, Any] | None = None
             if request.HasField("options"):
                 options = msgpack.unpackb(request.options, raw=False)
 
@@ -191,18 +198,28 @@ class EnvironmentServicer(
                 return StepResponse()
 
             # Deserialize the action
-            action = msgpack.unpackb(request.action, raw=False)
-            action = native_to_numpy(action, self.env.action_space)
+            action: list[int | float] = msgpack.unpackb(request.action, raw=False)
+
+            # Convert lists back to numpy
+            action_numpy = native_to_numpy_vec(
+                action, self.env.action_space, self.num_envs
+            )
 
             # Take a step in the environment
-            obs, reward, terminated, truncated, info = self.env.step(action)
+            obs, reward, terminated, truncated, info = self.env.step(action_numpy)
 
             # Convert numpy arrays to lists for serialization
             serializable_obs = self._get_serializable_observation(obs)
 
-            serializable_reward = float(reward)
-            serializable_terminated = bool(terminated)
-            serializable_truncated = bool(truncated)
+            # Create and return the response
+            if self.environment_type == EnvironmentType.VECTORIZED:
+                serializable_reward = reward.tolist()
+                serializable_terminated = terminated.tolist()
+                serializable_truncated = truncated.tolist()
+            else:
+                serializable_reward = float(reward)
+                serializable_terminated = bool(terminated)
+                serializable_truncated = bool(truncated)
 
             response = StepResponse(
                 observation=msgpack.packb(serializable_obs, use_bin_type=True),
@@ -269,18 +286,18 @@ class EnvironmentServicer(
             return Empty()
 
     def _get_serializable_observation(
-        self, observation: dict[str, AllowedTypes]
-    ) -> dict[str, AllowedSerializableTypes]:
-        return {key: numpy_to_native(value) for key, value in observation.items()}
+        self, observation: dict[str, np.ndarray]
+    ) -> dict[str, list[AllowedSerializableTypes]]:
+        return {key: value.tolist() for key, value in observation.items()}
 
 
-def create_environment_server(
-    environment_class: type[CRLEnvironment[CRLActType]],
+def create_vec_environment_server(
+    environment_class: type[CRLVecEnvironment[CRLActType]],
     port: int = 50051,
 ) -> None:
     """Start the gRPC server."""
     logger = logging.getLogger("containerl.environment_server")
-    environment_server = EnvironmentServicer(environment_class)
+    environment_server = EnvironmentServicerVec(environment_class)
     server = grpc.server(futures.ThreadPoolExecutor(max_workers=10))
     add_EnvironmentServiceServicer_to_server(environment_server, server)
     server.add_insecure_port(f"[::]:{port}")

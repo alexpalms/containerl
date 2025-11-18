@@ -4,12 +4,15 @@ from typing import Any, TypeVar, cast
 
 import numpy as np
 from gymnasium import spaces
+from numpy.typing import NDArray
 
 from .proto_pb2 import Space
 
-AllowedTypes = np.ndarray | np.integer[Any]
+AllowedTypes = NDArray[np.floating | np.integer[Any]] | np.integer[Any]
 AllowedSerializableTypes = list[int | float] | int
-AllowedSpaces = spaces.Space[AllowedTypes]
+AllowedSpaces = spaces.Space[
+    AllowedTypes
+]  # spaces.Box | spaces.Discrete | spaces.MultiDiscrete | spaces.MultiBinary
 AllowedInfoBaseTypes = str | bool | int | float
 AllowedInfoValueTypes = AllowedInfoBaseTypes | list[AllowedInfoBaseTypes]
 CRLActType = TypeVar("CRLActType", bound=AllowedTypes)
@@ -68,9 +71,7 @@ def native_to_numpy_space(proto_space: Space) -> AllowedSpaces:
         raise ValueError(f"Unsupported space type: {proto_space.type}")
 
 
-def numpy_to_native(
-    obj: AllowedTypes, space: AllowedSpaces
-) -> AllowedSerializableTypes:
+def numpy_to_native(obj: AllowedTypes) -> AllowedSerializableTypes:
     """Convert numpy arrays and other non-serializable objects to serializable types based on the space.
 
     Args:
@@ -78,8 +79,8 @@ def numpy_to_native(
         space: The Gymnasium space object (Box, Discrete, MultiDiscrete, or MultiBinary)
     """
     # Handle the four base space types
-    if isinstance(space, spaces.Discrete):
-        return obj.item()
+    if isinstance(obj, type(np.integer[Any])):
+        return int(obj)
     else:
         return obj.tolist()
 
