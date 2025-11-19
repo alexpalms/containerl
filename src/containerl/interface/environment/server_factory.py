@@ -11,6 +11,7 @@ import grpc
 import gymnasium as gym
 import msgpack
 import numpy as np
+from numpy.typing import NDArray
 
 from ..proto_pb2 import (
     Empty,
@@ -66,7 +67,7 @@ class CRLEnvironment(gym.Env[dict[str, AllowedTypes], CRLActType]):
         pass
 
     @abstractmethod
-    def render(self) -> np.ndarray | None:
+    def render(self) -> NDArray[np.uint8] | None:
         """Render the environment and return an image as a numpy array if applicable."""
         pass
 

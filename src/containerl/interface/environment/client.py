@@ -8,6 +8,7 @@ import grpc
 import msgpack
 import numpy as np
 from gymnasium import spaces
+from numpy.typing import NDArray
 
 # Add the interface directory to the path to import the generated gRPC code
 from ..proto_pb2 import (
@@ -171,7 +172,7 @@ class EnvironmentClient:
 
         return (numpy_observation, reward, terminated, truncated, info)
 
-    def render(self) -> np.ndarray | None:
+    def render(self) -> NDArray[np.uint8] | None:
         """Render the environment."""
         # Create the request
         render_request = Empty()
@@ -224,6 +225,11 @@ def main(server_address: str = "localhost:50051", num_steps: int = 5) -> None:
         num_steps: Number of steps to run in the test
     """
     logger = logging.getLogger("containerl.environment_client")
+    logging.basicConfig(
+        stream=sys.stdout,
+        level=logging.INFO,
+        format="%(asctime)s %(levelname)s:%(name)s: %(message)s",
+    )
     try:
         # Create a remote environment
         env = EnvironmentClient(server_address)
@@ -240,12 +246,18 @@ def main(server_address: str = "localhost:50051", num_steps: int = 5) -> None:
             action = env.action_space.sample()  # Random action
             if env.render_mode == "rgb_array":
                 frame = env.render()
-                assert isinstance(frame, np.ndarray), (
-                    "Render mode is rgb_array, but render returned a non-array"
-                )
-                assert frame.shape[2] == 3, (
-                    "Render mode is rgb_array, but render returned an array with the wrong number of channels"
-                )
+                if not isinstance(frame, np.ndarray):
+                    logger.error(
+                        f"Render mode is rgb_array, but render returned a non-array, type: {type(frame)}"
+                    )
+                    raise ValueError("Render returned non-array in rgb_array mode")
+                if frame.shape[2] != 3:
+                    logger.error(
+                        "Render mode is rgb_array, but render returned an array with the wrong number of channels"
+                    )
+                    raise ValueError(
+                        "Render returned an array with the wrong number of channels"
+                    )
                 logger.info("Rendering works as expected")
             obs, reward, terminated, truncated, info = env.step(action)
             if not env.observation_space.contains(obs):

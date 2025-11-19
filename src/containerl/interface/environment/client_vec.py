@@ -1,8 +1,9 @@
 """Client for connecting to a remote environment via gRPC."""
 
 import logging
+import sys
 from collections.abc import Mapping
-from typing import Any, SupportsFloat
+from typing import Any
 
 import grpc
 import msgpack
@@ -11,27 +12,25 @@ from gymnasium import spaces
 from numpy.typing import NDArray
 
 # Add the interface directory to the path to import the generated gRPC code
-from ..proto_pb2 import (
+from containerl.interface.proto_pb2 import (
     Empty,
     EnvironmentType,
     InitRequest,
     ResetRequest,
     StepRequest,
 )
-from ..proto_pb2_grpc import EnvironmentServiceStub
-from ..utils import (
+from containerl.interface.proto_pb2_grpc import EnvironmentServiceStub
+from containerl.interface.utils import (
     AllowedInfoValueTypes,
-    AllowedSerializableTypes,
     AllowedSpaces,
     AllowedTypes,
-    native_to_numpy,
     native_to_numpy_space,
     native_to_numpy_vec,
     numpy_to_native,
 )
 
 
-class EnvironmentClient:
+class VecEnvironmentClient:
     """
     A Gym environment that connects to a remote environment via gRPC.
 
@@ -86,12 +85,13 @@ class EnvironmentClient:
         self.action_space = native_to_numpy_space(spaces_response.action_space)
 
         # Set up number of environments
-        if spaces_response.environment_type == EnvironmentType.VECTORIZED:
-            self.num_envs = spaces_response.num_envs
-        else:
-            self.num_envs = 1
-
+        self.num_envs = spaces_response.num_envs
         self.environment_type = spaces_response.environment_type
+        if spaces_response.environment_type != EnvironmentType.VECTORIZED:
+            raise Exception(
+                "VecEnvironmentClient only supports VECTORIZED environments. "
+                "For STANDARD environments, please use EnvironmentClient."
+            )
 
         # Store render mode
         self.render_mode = (
@@ -103,8 +103,8 @@ class EnvironmentClient:
     def reset(
         self, *, seed: int | None = None, options: dict[str, Any] | None = None
     ) -> tuple[
-        Mapping[str, AllowedTypes | NDArray[np.floating | np.integer[Any]]],
-        Mapping[str, AllowedInfoValueTypes] | list[dict[str, AllowedInfoValueTypes]],
+        Mapping[str, NDArray[np.floating | np.integer[Any]]],
+        list[Mapping[str, AllowedInfoValueTypes]],
     ]:
         """Reset the environment and return the initial observation."""
         reset_request = ResetRequest()
@@ -119,10 +119,10 @@ class EnvironmentClient:
         reset_response = self.stub.Reset(reset_request)
 
         # Deserialize the observation and info
-        observation: Mapping[str, AllowedSerializableTypes] = msgpack.unpackb(
+        observation: Mapping[str, list[float | int]] = msgpack.unpackb(
             reset_response.observation, raw=False
         )
-        info: Mapping[str, AllowedInfoValueTypes] = msgpack.unpackb(
+        info: list[Mapping[str, AllowedInfoValueTypes]] = msgpack.unpackb(
             reset_response.info, raw=False
         )
 
@@ -134,11 +134,11 @@ class EnvironmentClient:
     def step(
         self, action: AllowedTypes
     ) -> tuple[
-        Mapping[str, AllowedTypes | NDArray[np.floating | np.integer[Any]]],
-        SupportsFloat | NDArray[np.floating],
-        bool | NDArray[np.bool_],
-        bool | NDArray[np.bool_],
-        Mapping[str, AllowedInfoValueTypes] | list[Mapping[str, AllowedInfoValueTypes]],
+        Mapping[str, NDArray[np.floating | np.integer[Any]]],
+        NDArray[np.floating],
+        NDArray[np.bool_],
+        NDArray[np.bool_],
+        list[Mapping[str, AllowedInfoValueTypes]],
     ]:
         """Take a step in the environment."""
         # Convert NumPy arrays to lists for serialization
@@ -157,32 +157,31 @@ class EnvironmentClient:
         step_response = self.stub.Step(step_request)
 
         # Deserialize the observation and info
-        observation: Mapping[str, AllowedSerializableTypes] = msgpack.unpackb(
+        observation: Mapping[str, list[float | int]] = msgpack.unpackb(
             step_response.observation, raw=False
         )
-        reward: SupportsFloat | NDArray[np.floating] = msgpack.unpackb(
-            step_response.reward, raw=False
+        reward: list[float] = msgpack.unpackb(step_response.reward, raw=False)
+        terminated: list[bool] = msgpack.unpackb(step_response.terminated, raw=False)
+        truncated: list[bool] = msgpack.unpackb(step_response.truncated, raw=False)
+        info: list[Mapping[str, AllowedInfoValueTypes]] = msgpack.unpackb(
+            step_response.info, raw=False
         )
-        terminated: bool | NDArray[np.bool_] = msgpack.unpackb(
-            step_response.terminated, raw=False
-        )
-        truncated: bool | NDArray[np.bool_] = msgpack.unpackb(
-            step_response.truncated, raw=False
-        )
-        info: (
-            Mapping[str, AllowedInfoValueTypes] | list[dict[str, AllowedInfoValueTypes]]
-        ) = msgpack.unpackb(step_response.info, raw=False)
 
         # Convert lists back to numpy arrays for the observation
         numpy_observation = self._get_numpy_observation(observation)
-        if self.environment_type == EnvironmentType.VECTORIZED:
-            reward = np.array(reward, dtype=np.float32).reshape(self.num_envs)
-            terminated = np.array(terminated, dtype=bool).reshape(self.num_envs)
-            truncated = np.array(truncated, dtype=bool).reshape(self.num_envs)
+        numpy_reward = np.array(reward, dtype=np.float32).reshape(self.num_envs)
+        numpy_terminated = np.array(terminated, dtype=bool).reshape(self.num_envs)
+        numpy_truncated = np.array(truncated, dtype=bool).reshape(self.num_envs)
 
-        return (numpy_observation, reward, terminated, truncated, info)
+        return (
+            numpy_observation,
+            numpy_reward,
+            numpy_terminated,
+            numpy_truncated,
+            info,
+        )
 
-    def render(self) -> np.ndarray | None:
+    def render(self) -> NDArray[np.uint8] | None:
         """Render the environment."""
         # Create the request
         render_request = Empty()
@@ -203,10 +202,8 @@ class EnvironmentClient:
             )
             array = array.reshape(render_data["shape"])
             return array
-        except Exception:
-            # If it's not msgpack data, it might be plain text or other format
-            # Just return it as a string
-            return render_response.render_data.decode("utf-8")
+        except Exception as err:
+            raise Exception("Failed to deserialize render data from server") from err
 
     def close(self) -> None:
         """Close the environment."""
@@ -220,24 +217,12 @@ class EnvironmentClient:
         self.channel.close()
 
     def _get_numpy_observation(
-        self, observation: Mapping[str, AllowedSerializableTypes]
-    ) -> (
-        Mapping[str, AllowedTypes]
-        | Mapping[str, NDArray[np.floating | np.integer[Any]]]
-    ):
-        if self.environment_type == EnvironmentType.VECTORIZED:
-            return {
-                key: native_to_numpy_vec(
-                    value, self.observation_space[key], self.num_envs
-                )
-                for key, value in observation.items()
-            }
-
-        else:
-            return {
-                key: native_to_numpy(value, self.observation_space[key])
-                for key, value in observation.items()
-            }
+        self, observation: Mapping[str, list[float | int]]
+    ) -> Mapping[str, NDArray[np.floating | np.integer[Any]]]:
+        return {
+            key: native_to_numpy_vec(value, self.observation_space[key], self.num_envs)
+            for key, value in observation.items()
+        }
 
 
 def main(server_address: str = "localhost:50051", num_steps: int = 5) -> None:
@@ -249,43 +234,47 @@ def main(server_address: str = "localhost:50051", num_steps: int = 5) -> None:
         num_steps: Number of steps to run in the test
     """
     logger = logging.getLogger("containerl.environment_client")
+    logging.basicConfig(
+        stream=sys.stdout,
+        level=logging.INFO,
+        format="%(asctime)s %(levelname)s:%(name)s: %(message)s",
+    )
+
     try:
         # Create a remote environment
-        env = EnvironmentClient(server_address)
-
+        env = VecEnvironmentClient(server_address)
         # Reset the environment
         obs, info = env.reset()
-        if env.environment_type == EnvironmentType.VECTORIZED:
-            for key, value in obs.items():
-                for i in range(env.num_envs):
-                    if not env.observation_space[key].contains(value[i]):
-                        logger.error(
-                            f"Initial observation is not of type {env.observation_space[key]}"
-                        )
-        else:
-            if not env.observation_space.contains(obs):
-                logger.error(
-                    f"Initial observation is not of type {env.observation_space}"
-                )
+        for key, value in obs.items():
+            for i in range(env.num_envs):
+                if not env.observation_space[key].contains(value[i]):
+                    logger.error(
+                        f"Initial observation is not of type {env.observation_space[key]}"
+                    )
+
         logger.info(f"Initial observation: {obs}")
         logger.info(f"Initial info: {info}")
 
         # Run a few steps
         for i in range(num_steps):
-            if env.environment_type == EnvironmentType.VECTORIZED:
-                action = np.stack(
-                    [env.action_space.sample() for _ in range(env.num_envs)]
-                )
-            else:
-                action = env.action_space.sample()  # Random action
+            action = np.stack([env.action_space.sample() for _ in range(env.num_envs)])
+
             if env.render_mode == "rgb_array":
                 frame = env.render()
-                assert isinstance(frame, np.ndarray), (
-                    "Render mode is rgb_array, but render returned a non-array"
-                )
-                assert frame.shape[2] == 3, (
-                    "Render mode is rgb_array, but render returned an array with the wrong number of channels"
-                )
+                if not isinstance(frame, np.ndarray):
+                    logger.error(
+                        f"Render did not return a numpy array, type: {type(frame)}"
+                    )
+                    raise Exception(
+                        "Render mode is rgb_array, but render returned a non-array"
+                    )
+                if not frame.shape[2] == 3:
+                    logger.error(
+                        "Render returned an array with the wrong number of channels"
+                    )
+                    raise Exception(
+                        "Render mode is rgb_array, but render returned an array with the wrong number of channels"
+                    )
                 logger.info("Rendering works as expected")
             obs, reward, terminated, truncated, info = env.step(action)
             if env.environment_type == EnvironmentType.VECTORIZED:
@@ -347,6 +336,4 @@ if __name__ == "__main__":
     try:
         main(args.address, args.steps)
     except Exception:
-        import sys
-
         sys.exit(1)

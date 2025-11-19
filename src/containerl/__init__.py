@@ -7,6 +7,10 @@ from .interface.environment.client import EnvironmentClient
 from .interface.environment.client import (
     main as validate_environment_connection,
 )
+from .interface.environment.client_vec import VecEnvironmentClient
+from .interface.environment.client_vec import (
+    main as validate_vec_environment_connection,
+)
 from .interface.environment.server_factory import (
     CRLEnvironment,
     create_environment_server,
@@ -55,6 +59,8 @@ from .interface.utils import (
 
 __all__ = [
     "EnvironmentClient",
+    "VecEnvironmentClient",
+    "validate_vec_environment_connection",
     "validate_environment_connection",
     "AgentClient",
     "validate_agent_connection",

@@ -45,10 +45,12 @@ class CRLVecEnvironment(
     """Abstract base class for Vectorized Environments."""
 
     num_envs: int
+    single_observation_space: gym.spaces.Space[dict[str, AllowedTypes]]
+    single_action_space: gym.spaces.Space[AllowedTypes]
 
     @abstractmethod
     def reset(  # pyright: ignore[reportIncompatibleMethodOverride]
-        self, *, seed: int | None = None, options: dict[str, Any] | None = None
+        self, seed: int | None = None, options: dict[str, Any] | None = None
     ) -> tuple[
         dict[str, NDArray[np.floating | np.integer[Any]]],
         list[dict[str, AllowedInfoValueTypes]],
@@ -70,12 +72,12 @@ class CRLVecEnvironment(
         pass
 
     @abstractmethod
-    def render(self) -> np.ndarray | None:
+    def render(self) -> NDArray[np.uint8] | None:
         """Render the environment and return an image as a numpy array if applicable."""
         pass
 
 
-class EnvironmentServicerVec(
+class VecEnvironmentServicer(
     EnvironmentServiceServicer,
     Generic[CRLActType],
 ):
@@ -297,7 +299,7 @@ def create_vec_environment_server(
 ) -> None:
     """Start the gRPC server."""
     logger = logging.getLogger("containerl.environment_server")
-    environment_server = EnvironmentServicerVec(environment_class)
+    environment_server = VecEnvironmentServicer(environment_class)
     server = grpc.server(futures.ThreadPoolExecutor(max_workers=10))
     add_EnvironmentServiceServicer_to_server(environment_server, server)
     server.add_insecure_port(f"[::]:{port}")

@@ -4,7 +4,10 @@ import logging
 
 import pytest
 
-from containerl import validate_environment_connection
+from containerl import (
+    validate_environment_connection,
+    validate_vec_environment_connection,
+)
 from containerl.cli import build_run, stop_container
 
 # Define environments and their build configurations
@@ -65,7 +68,10 @@ def test_build_run_environment(env_folder: str) -> None:
 
     success = False
     try:
-        validate_environment_connection("localhost:50051")
+        if "vectorized" in env_folder:
+            validate_vec_environment_connection("localhost:50051")
+        else:
+            validate_environment_connection("localhost:50051")
         success = True
     except Exception as e:
         logger.error(f"Error testing environment connection: {str(e)}")
