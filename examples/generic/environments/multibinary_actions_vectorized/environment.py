@@ -60,7 +60,7 @@ class Environment(CRLVecEnvironment[NDArray[np.integer[Any]]]):
         # Expect action shape to be (num_envs, 4)
         if action.shape != (self.num_envs, 4):
             raise Exception(
-                f"Action shape must be ({self.num_envs}, {self.action_space.shape}), got {action.shape}"
+                f"Action shape must be ({self.num_envs}, 4), got {action.shape}"
             )
         # Check each action individually
         for i, single_action in enumerate(action):

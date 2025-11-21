@@ -56,10 +56,11 @@ class Environment(CRLVecEnvironment[NDArray[np.integer[Any]]]):
         NDArray[np.bool_],
         list[dict[str, AllowedInfoValueTypes]],
     ]:
-        # Expect action shape to be (num_envs, 16)
-        if action.shape != (self.num_envs, 16):
+        """Take a step in the environment."""
+        # Expect action shape to be (num_envs, 4)
+        if action.shape != (self.num_envs, 4):
             raise Exception(
-                f"Action shape must be ({self.num_envs}, {self.action_space.shape}), got {action.shape}"
+                f"Action shape must be ({self.num_envs}, 4), got {action.shape}"
             )
         # Check each action individually
         for i, single_action in enumerate(action):
