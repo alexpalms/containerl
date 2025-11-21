@@ -1,6 +1,7 @@
 """Client for connecting to a remote environment via gRPC."""
 
 import logging
+import sys
 from collections.abc import Mapping
 from typing import Any, SupportsFloat
 
