@@ -12,15 +12,15 @@ from gymnasium import spaces
 from numpy.typing import NDArray
 
 # Add the interface directory to the path to import the generated gRPC code
-from containerl.interface.proto_pb2 import (
+from ..proto_pb2 import (
     Empty,
     EnvironmentType,
     InitRequest,
     ResetRequest,
     StepRequest,
 )
-from containerl.interface.proto_pb2_grpc import EnvironmentServiceStub
-from containerl.interface.utils import (
+from ..proto_pb2_grpc import EnvironmentServiceStub
+from ..utils import (
     AllowedInfoValueTypes,
     AllowedSpaces,
     AllowedTypes,

@@ -21,7 +21,7 @@ from matplotlib.figure import Figure
 from matplotlib.ticker import MaxNLocator
 from numpy.typing import NDArray
 
-from containerl.interface import create_environment_server
+from containerl import create_environment_server
 
 # Global list to track all subprocesses
 _active_simulators: list[AnyLogicSim] = []

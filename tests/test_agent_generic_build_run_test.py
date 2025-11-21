@@ -4,8 +4,8 @@ import logging
 
 import pytest
 
+from containerl import validate_agent_connection
 from containerl.cli import build_run, stop_container
-from containerl.interface.agent.client import main as validate_agent_connection
 
 # Test cases with descriptive IDs
 TEST_CASES = [
