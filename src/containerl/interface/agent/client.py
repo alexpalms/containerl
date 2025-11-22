@@ -5,13 +5,14 @@ import logging
 import grpc
 import msgpack
 from gymnasium import spaces
-from gymnasium.core import ActType, ObsType
 
 from ..proto_pb2 import Empty, ObservationRequest
 
 # Add the interface directory to the path to import the generated gRPC code
 from ..proto_pb2_grpc import AgentServiceStub
 from ..utils import (
+    AllowedSerializableTypes,
+    AllowedTypes,
     native_to_numpy,
     native_to_numpy_space,
     numpy_to_native,
@@ -55,14 +56,12 @@ class AgentClient:
         # Set up action space
         self.action_space = native_to_numpy_space(spaces_response.action_space)
 
-    def get_action(self, observation: ObsType) -> ActType:
+    def get_action(self, observation: dict[str, AllowedTypes]) -> AllowedTypes:
         """Get an action from the agent."""
         # Convert numpy arrays to lists for serialization
-        serializable_observation = {}
+        serializable_observation: dict[str, AllowedSerializableTypes] = {}
         for key, value in observation.items():
-            serializable_observation[key] = numpy_to_native(
-                value, self.observation_space[key]
-            )
+            serializable_observation[key] = numpy_to_native(value)
         observation_request = ObservationRequest(
             observation=msgpack.packb(serializable_observation, use_bin_type=True)
         )
@@ -71,12 +70,16 @@ class AgentClient:
         action_response = self.stub.GetAction(observation_request)
 
         # Deserialize the action
-        action = msgpack.unpackb(action_response.action, raw=False)
+        action: AllowedSerializableTypes = msgpack.unpackb(
+            action_response.action, raw=False
+        )
         numpy_action = native_to_numpy(action, self.action_space)
 
         return numpy_action
 
-    def get_action_serve(self, observation: ObsType) -> ActType:
+    def get_action_serve(
+        self, observation: dict[str, AllowedTypes]
+    ) -> AllowedSerializableTypes:
         """Get an action from the agent."""
         # Convert numpy arrays to lists for serialization
         observation_request = ObservationRequest(
@@ -87,7 +90,9 @@ class AgentClient:
         action_response = self.stub.GetAction(observation_request)
 
         # Deserialize the action
-        action = msgpack.unpackb(action_response.action, raw=False)
+        action: AllowedSerializableTypes = msgpack.unpackb(
+            action_response.action, raw=False
+        )
         return action
 
 

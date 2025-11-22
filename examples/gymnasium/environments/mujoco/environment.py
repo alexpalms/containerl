@@ -4,6 +4,7 @@ from typing import Any
 
 import gymnasium as gym
 import numpy as np
+from numpy.typing import NDArray
 
 from containerl import (
     AllowedInfoValueTypes,
@@ -69,7 +70,7 @@ class Environment(CRLEnvironment[np.ndarray]):
             process_info(info),
         )
 
-    def render(self) -> np.ndarray:  # type: ignore[override]
+    def render(self) -> NDArray[np.uint8]:
         """Render the environment."""
         return self._env.render()  # type: ignore
 

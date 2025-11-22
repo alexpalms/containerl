@@ -4,6 +4,7 @@
 import logging
 import traceback
 from abc import abstractmethod
+from collections.abc import Mapping
 from concurrent import futures
 from typing import Generic, cast, final
 
@@ -23,6 +24,7 @@ from ..proto_pb2_grpc import (
     add_AgentServiceServicer_to_server,
 )
 from ..utils import (
+    AllowedSerializableTypes,
     AllowedTypes,
     CRLActType,
     native_to_numpy,
@@ -103,8 +105,10 @@ def build_agent_server(
             try:
                 # Get the action from the agent
                 # Convert lists back to numpy arrays for the observation
-                observation = msgpack.unpackb(request.observation, raw=False)
-                numpy_observation = {}
+                observation: Mapping[str, AllowedSerializableTypes] = msgpack.unpackb(
+                    request.observation, raw=False
+                )
+                numpy_observation: dict[str, AllowedTypes] = {}
                 for key, value in cast(
                     gym.spaces.Dict, self.observation_space
                 ).spaces.items():
@@ -112,7 +116,7 @@ def build_agent_server(
                 action = self.agent.get_action(numpy_observation)
 
                 # Convert numpy arrays to lists for serialization
-                serializable_action = numpy_to_native(action, self.action_space)
+                serializable_action = numpy_to_native(action)
 
                 # Serialize the observation and info
                 response = ActionResponse(

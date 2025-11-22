@@ -7,9 +7,17 @@ from .interface.environment.client import EnvironmentClient
 from .interface.environment.client import (
     main as validate_environment_connection,
 )
+from .interface.environment.client_vec import VecEnvironmentClient
+from .interface.environment.client_vec import (
+    main as validate_vec_environment_connection,
+)
 from .interface.environment.server_factory import (
     CRLEnvironment,
     create_environment_server,
+)
+from .interface.environment.server_factory_vec import (
+    CRLVecEnvironment,
+    create_vec_environment_server,
 )
 from .interface.proto_pb2 import (
     ActionResponse,
@@ -51,6 +59,8 @@ from .interface.utils import (
 
 __all__ = [
     "EnvironmentClient",
+    "VecEnvironmentClient",
+    "validate_vec_environment_connection",
     "validate_environment_connection",
     "AgentClient",
     "validate_agent_connection",
@@ -69,6 +79,8 @@ __all__ = [
     "ObservationRequest",
     "ActionResponse",
     "create_environment_server",
+    "create_vec_environment_server",
+    "CRLVecEnvironment",
     "add_EnvironmentServiceServicer_to_server",
     "CRLEnvironment",
     "create_agent_server",

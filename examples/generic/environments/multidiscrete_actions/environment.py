@@ -5,6 +5,7 @@ from typing import Any
 
 import numpy as np
 from gymnasium import spaces
+from numpy.typing import NDArray
 
 from containerl import (
     AllowedInfoValueTypes,
@@ -75,7 +76,7 @@ class Environment(CRLEnvironment[np.ndarray]):
     def _get_info(self) -> dict[str, AllowedInfoValueTypes]:
         return {}
 
-    def render(self) -> np.ndarray:  # type: ignore[override]
+    def render(self) -> NDArray[np.uint8]:
         """Render the environment."""
         # Generate random RGB image
         return np.random.randint(0, 255, (100, 100, 3), dtype=np.uint8)

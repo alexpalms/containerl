@@ -1,12 +1,23 @@
-import gymnasium as gym
+"""A vectorized environment with discrete action space and dictionary observations."""
+
+from typing import Any
+
 import numpy as np
 from gymnasium import spaces
+from numpy.typing import NDArray
 
-from containerl import create_environment_server
+from containerl import (
+    AllowedInfoValueTypes,
+    AllowedTypes,
+    CRLVecEnvironment,
+    create_vec_environment_server,
+)
 
 
-class Environment(gym.Env):
-    def __init__(self, num_envs=1):
+class Environment(CRLVecEnvironment[NDArray[np.integer[Any]]]):
+    """A simple multibinary action vectorized environment with dictionary observations."""
+
+    def __init__(self, num_envs: int = 1):
         self.num_envs = num_envs
         self.observation_space = spaces.Dict(
             {
@@ -21,61 +32,81 @@ class Environment(gym.Env):
 
         self.action_space = spaces.MultiBinary(4)
 
+        self.single_observation_space = self.observation_space
+        self.single_action_space = self.action_space
         self.render_mode = "rgb_array"
 
-    def reset(self, seed=None, options=None):
+    def reset(
+        self, seed: int | None = None, options: dict[str, Any] | None = None
+    ) -> tuple[
+        dict[str, NDArray[np.floating | np.integer[Any]]],
+        list[dict[str, AllowedInfoValueTypes]],
+    ]:
+        """Reset the environment."""
         super(type(self), self).reset(seed=seed)
         self.env_step = 0
-        return self.get_observation(), self.get_info()
+        return self._get_observation(), self._get_info()
 
-    def step(self, action):
-        # Expect action shape to be (num_envs, 1)
-        assert isinstance(action, np.ndarray), (
-            f"Action must be numpy array, got {type(action)}"
-        )
-        assert action.shape == (self.num_envs, *self.action_space.shape), (
-            f"Action shape must be ({self.num_envs}, {self.action_space.shape}), got {action.shape}"
-        )
+    def step(
+        self, action: NDArray[np.integer[Any]]
+    ) -> tuple[
+        dict[str, NDArray[np.floating | np.integer[Any]]],
+        NDArray[np.floating],
+        NDArray[np.bool_],
+        NDArray[np.bool_],
+        list[dict[str, AllowedInfoValueTypes]],
+    ]:
+        """Take a step in the environment."""
+        # Expect action shape to be (num_envs, 4)
+        if action.shape != (self.num_envs, 4):
+            raise Exception(
+                f"Action shape must be ({self.num_envs}, 4), got {action.shape}"
+            )
         # Check each action individually
         for i, single_action in enumerate(action):
-            assert self.action_space.contains(single_action), (
-                f"Action {single_action} at index {i} not in action space {self.action_space}"
-            )
+            if not self.action_space.contains(single_action):
+                raise Exception(
+                    f"Action {single_action} at index {i} not in action space {self.action_space}"
+                )
 
         self.env_step += 1
         return (
-            self.get_observation(),
-            self.get_reward(),
-            self.get_episode_termination(),
-            self.get_episode_abortion(),
-            self.get_info(),
+            self._get_observation(),
+            self._get_reward(),
+            self._get_episode_termination(),
+            self._get_episode_abortion(),
+            self._get_info(),
         )
 
-    def get_observation(self):
+    def _get_observation(self) -> dict[str, NDArray[np.floating | np.integer[Any]]]:
+        obs_list: list[dict[str, AllowedTypes]] = [
+            self.single_observation_space.sample() for _ in range(self.num_envs)
+        ]
         return {
-            space_key: np.stack([space.sample() for _ in range(self.num_envs)])
-            for space_key, space in self.observation_space.spaces.items()
+            space_key: np.stack([obs[space_key] for obs in obs_list])
+            for space_key in obs_list[0].keys()
         }
 
-    def get_reward(self):
+    def _get_reward(self) -> NDArray[np.floating]:
         return np.random.uniform(-1.0, 1.0, size=self.num_envs).astype(np.float32)
 
-    def get_episode_termination(self):
-        return np.full(self.num_envs, self.env_step == 10, dtype=bool)
+    def _get_episode_termination(self) -> NDArray[np.bool_]:
+        return np.full(self.num_envs, self.env_step == 10, dtype=np.bool_)
 
-    def get_episode_abortion(self):
-        return np.zeros(self.num_envs, dtype=bool)
+    def _get_episode_abortion(self) -> NDArray[np.bool_]:
+        return np.zeros(self.num_envs, dtype=np.bool_)
 
-    def get_info(self):
+    def _get_info(self) -> list[dict[str, AllowedInfoValueTypes]]:
         return [{} for _ in range(self.num_envs)]
 
-    def render(self):
-        # Generate random RGB image
+    def render(self) -> NDArray[np.uint8]:
+        """Render the environment."""
         return np.random.randint(0, 255, (100, 100, 3), dtype=np.uint8)
 
-    def close(self):
+    def close(self) -> None:
+        """Close the environment."""
         pass
 
 
 if __name__ == "__main__":
-    create_environment_server(Environment)
+    create_vec_environment_server(Environment)
