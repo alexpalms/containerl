@@ -3,10 +3,10 @@
 # gRPC Server Implementation
 import logging
 import traceback
-from abc import abstractmethod
+from abc import ABC, abstractmethod
 from collections.abc import Mapping
 from concurrent import futures
-from typing import Generic, cast, final
+from typing import cast, final
 
 import grpc
 import gymnasium as gym
@@ -26,41 +26,40 @@ from ..proto_pb2_grpc import (
 from ..utils import (
     AllowedSerializableTypes,
     AllowedTypes,
-    CRLActType,
     native_to_numpy,
     numpy_to_native,
     numpy_to_native_space,
 )
 
 
-class CRLAgent(Generic[CRLActType]):
+class CRLAgent(ABC):
     """Abstract base class for agents."""
 
     observation_space: spaces.Space[dict[str, AllowedTypes]]
-    action_space: spaces.Space[CRLActType]
+    action_space: spaces.Space[AllowedTypes]
 
     @final
     def get_spaces(
         self,
-    ) -> tuple[spaces.Space[dict[str, AllowedTypes]], spaces.Space[CRLActType]]:
+    ) -> tuple[spaces.Space[dict[str, AllowedTypes]], spaces.Space[AllowedTypes]]:
         """Return the observation and action spaces."""
         return self.observation_space, self.action_space
 
     @abstractmethod
-    def get_action(self, observation: dict[str, AllowedTypes]) -> CRLActType:
+    def get_action(self, observation: dict[str, AllowedTypes]) -> AllowedTypes:
         """Given an observation, return an action."""
         pass
 
 
 def build_agent_server(
-    agent: CRLAgent[AllowedTypes],
+    agent: CRLAgent,
 ) -> AgentServiceServicer:
     """Create an AgentServicer class using the provided AgentClass."""
 
     class AgentServicer(AgentServiceServicer):
         """gRPC servicer that wraps the Agent."""
 
-        def __init__(self, agent: CRLAgent[AllowedTypes]) -> None:
+        def __init__(self, agent: CRLAgent) -> None:
             self.agent = agent
             self.observation_space, self.action_space = self.agent.get_spaces()
             # Handle observation space (Dict space)
@@ -136,7 +135,7 @@ def build_agent_server(
     return agent_server
 
 
-def create_agent_server(agent: CRLAgent[CRLActType], port: int = 50051) -> None:
+def create_agent_server(agent: CRLAgent, port: int = 50051) -> None:
     """Start the gRPC server."""
     logger = logging.getLogger(__name__)
     agent_server = build_agent_server(agent)

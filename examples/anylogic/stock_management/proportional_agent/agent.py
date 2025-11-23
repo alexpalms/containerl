@@ -3,11 +3,10 @@
 import numpy as np
 from gymnasium import spaces
 
-from containerl import AllowedTypes, create_agent_server
-from containerl import CRLAgent as BaseAgent
+from containerl import AllowedTypes, CRLAgent, create_agent_server
 
 
-class Agent(BaseAgent[np.ndarray]):
+class Agent(CRLAgent):
     """Simple proportional Agent for Anylogic stock problem."""
 
     def __init__(self) -> None:
@@ -26,7 +25,7 @@ class Agent(BaseAgent[np.ndarray]):
 
         self.action_space = spaces.Box(0, 50, shape=(1,), dtype=np.float32)
 
-    def get_action(self, observation: dict[str, AllowedTypes]) -> np.ndarray:
+    def get_action(self, observation: dict[str, AllowedTypes]) -> AllowedTypes:
         """Return the optimal action as calculated by the proportional controller."""
         act = np.clip(
             self.proportional_constant * (self.target_stock - observation["stock"]),

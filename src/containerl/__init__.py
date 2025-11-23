@@ -3,7 +3,7 @@ from . import cli
 from .interface.agent.client import AgentClient
 from .interface.agent.client import main as validate_agent_connection
 from .interface.agent.server_factory import CRLAgent, create_agent_server
-from .interface.environment.client import EnvironmentClient
+from .interface.environment.client import CRLEnvironmentClient
 from .interface.environment.client import (
     main as validate_environment_connection,
 )
@@ -11,8 +11,8 @@ from .interface.environment.client_vec import VecEnvironmentClient
 from .interface.environment.client_vec import (
     main as validate_vec_environment_connection,
 )
+from .interface.environment.server import CRLEnvironmentBase, CRLGymEnvironmentAdapter
 from .interface.environment.server_factory import (
-    CRLEnvironment,
     create_environment_server,
 )
 from .interface.environment.server_factory_vec import (
@@ -48,7 +48,6 @@ from .interface.utils import (
     AllowedSerializableTypes,
     AllowedSpaces,
     AllowedTypes,
-    CRLActType,
     native_to_numpy,
     native_to_numpy_space,
     native_to_numpy_vec,
@@ -58,7 +57,8 @@ from .interface.utils import (
 )
 
 __all__ = [
-    "EnvironmentClient",
+    "CRLEnvironmentClient",
+    "CRLGymEnvironmentAdapter",
     "VecEnvironmentClient",
     "validate_vec_environment_connection",
     "validate_environment_connection",
@@ -82,7 +82,7 @@ __all__ = [
     "create_vec_environment_server",
     "CRLVecEnvironment",
     "add_EnvironmentServiceServicer_to_server",
-    "CRLEnvironment",
+    "CRLEnvironmentBase",
     "create_agent_server",
     "add_AgentServiceServicer_to_server",
     "EnvironmentType",
@@ -97,7 +97,6 @@ __all__ = [
     "AllowedSpaces",
     "AllowedTypes",
     "AllowedInfoValueTypes",
-    "CRLActType",
     "process_info",
     "AllowedSerializableTypes",
     "CRLAgent",

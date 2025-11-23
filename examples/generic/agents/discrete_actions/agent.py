@@ -1,15 +1,14 @@
 """An example of a generic agent with discrete action space and dictionary observations."""
 
-from typing import Any, cast
+from typing import cast
 
 import numpy as np
 from gymnasium import spaces
 
-from containerl import AllowedTypes, create_agent_server
-from containerl import CRLAgent as BaseAgent
+from containerl import AllowedTypes, CRLAgent, create_agent_server
 
 
-class Agent(BaseAgent[np.integer[Any]]):
+class Agent(CRLAgent):
     """A simple agent with dictionary observations and discrete action space."""
 
     def __init__(self) -> None:
@@ -27,7 +26,7 @@ class Agent(BaseAgent[np.integer[Any]]):
 
         self.action_space = spaces.Discrete(4)
 
-    def get_action(self, observation: dict[str, AllowedTypes]) -> np.integer[Any]:
+    def get_action(self, observation: dict[str, AllowedTypes]) -> AllowedTypes:
         """Return a random action based on the observation."""
         for key, space in cast(spaces.Dict, self.observation_space).spaces.items():
             if key not in observation:

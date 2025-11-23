@@ -1,6 +1,6 @@
 """Utility functions for converting between Gymnasium spaces and protobuf representations."""
 
-from typing import Any, TypeVar, cast
+from typing import Any, cast
 
 import numpy as np
 from gymnasium import spaces
@@ -15,7 +15,6 @@ AllowedSpaces = spaces.Space[
 ]  # spaces.Box | spaces.Discrete | spaces.MultiDiscrete | spaces.MultiBinary
 AllowedInfoBaseTypes = str | bool | int | float
 AllowedInfoValueTypes = AllowedInfoBaseTypes | list[AllowedInfoBaseTypes]
-CRLActType = TypeVar("CRLActType", bound=AllowedTypes)
 
 
 def numpy_to_native_space(space: AllowedSpaces, space_proto: Space) -> None:

@@ -5,7 +5,7 @@ import logging
 import traceback
 from abc import abstractmethod
 from concurrent import futures
-from typing import Any, Generic
+from typing import Any
 
 import grpc
 import gymnasium as gym
@@ -33,14 +33,16 @@ from ..utils import (
     AllowedSerializableTypes,
     AllowedSpaces,
     AllowedTypes,
-    CRLActType,
     native_to_numpy_vec,
     numpy_to_native_space,
 )
 
 
 class CRLVecEnvironment(
-    gym.Env[dict[str, NDArray[np.floating | np.integer[Any]]], CRLActType]
+    gym.Env[
+        dict[str, NDArray[np.floating | np.integer[Any]]],
+        NDArray[np.floating | np.integer[Any]],
+    ]
 ):
     """Abstract base class for Vectorized Environments."""
 
@@ -60,7 +62,7 @@ class CRLVecEnvironment(
 
     @abstractmethod
     def step(  # pyright: ignore[reportIncompatibleMethodOverride]
-        self, action: CRLActType
+        self, action: NDArray[np.floating | np.integer[Any]]
     ) -> tuple[
         dict[str, NDArray[np.floating | np.integer[Any]]],
         NDArray[np.floating],
@@ -79,15 +81,14 @@ class CRLVecEnvironment(
 
 class VecEnvironmentServicer(
     EnvironmentServiceServicer,
-    Generic[CRLActType],
 ):
     """gRPC servicer that wraps the GymEnvironment."""
 
     def __init__(
         self,
-        environment_class: type[CRLVecEnvironment[CRLActType]],
+        environment_class: type[CRLVecEnvironment],
     ) -> None:
-        self.env: CRLVecEnvironment[AllowedTypes] | None = None
+        self.env: CRLVecEnvironment | None = None
         self.environment_class = environment_class
         self.environment_type: EnvironmentType = EnvironmentType.VECTORIZED
         self.num_envs: int = 1
@@ -294,7 +295,7 @@ class VecEnvironmentServicer(
 
 
 def create_vec_environment_server(
-    environment_class: type[CRLVecEnvironment[CRLActType]],
+    environment_class: type[CRLVecEnvironment],
     port: int = 50051,
 ) -> None:
     """Start the gRPC server."""

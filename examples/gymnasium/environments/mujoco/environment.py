@@ -9,13 +9,13 @@ from numpy.typing import NDArray
 from containerl import (
     AllowedInfoValueTypes,
     AllowedTypes,
-    CRLEnvironment,
+    CRLGymEnvironmentAdapter,
     create_environment_server,
     process_info,
 )
 
 
-class Environment(CRLEnvironment[np.ndarray]):
+class Environment(gym.Env[dict[str, AllowedTypes], AllowedTypes]):
     """
     Gymnasium MuJoCo Environment Wrapper.
 
@@ -35,7 +35,7 @@ class Environment(CRLEnvironment[np.ndarray]):
 
     def __init__(self) -> None:
         self.render_mode = "rgb_array"
-        self._env: gym.Env[np.ndarray, np.ndarray] = gym.make(  # pyright: ignore[reportUnknownMemberType]
+        self._env: gym.Env[np.ndarray, AllowedTypes] = gym.make(  # pyright: ignore[reportUnknownMemberType]
             "Ant-v5", render_mode=self.render_mode
         )
 
@@ -56,7 +56,7 @@ class Environment(CRLEnvironment[np.ndarray]):
         return self._process_observation(obs), process_info(info)
 
     def step(
-        self, action: np.ndarray
+        self, action: AllowedTypes
     ) -> tuple[
         dict[str, AllowedTypes], float, bool, bool, dict[str, AllowedInfoValueTypes]
     ]:
@@ -80,4 +80,4 @@ class Environment(CRLEnvironment[np.ndarray]):
 
 
 if __name__ == "__main__":
-    create_environment_server(Environment)
+    create_environment_server(CRLGymEnvironmentAdapter(Environment))

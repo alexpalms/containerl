@@ -3,6 +3,7 @@
 import random
 from typing import Any
 
+import gymnasium as gym
 import numpy as np
 from gymnasium import spaces
 from numpy.typing import NDArray
@@ -10,12 +11,12 @@ from numpy.typing import NDArray
 from containerl import (
     AllowedInfoValueTypes,
     AllowedTypes,
-    CRLEnvironment,
+    CRLGymEnvironmentAdapter,
     create_environment_server,
 )
 
 
-class Environment(CRLEnvironment[np.ndarray]):
+class Environment(gym.Env[dict[str, AllowedTypes], AllowedTypes]):
     """A simple continuous action environment with dictionary observations."""
 
     def __init__(self) -> None:
@@ -46,7 +47,7 @@ class Environment(CRLEnvironment[np.ndarray]):
         return self._get_observation(), self._get_info()
 
     def step(
-        self, action: np.ndarray
+        self, action: AllowedTypes
     ) -> tuple[
         dict[str, AllowedTypes], float, bool, bool, dict[str, AllowedInfoValueTypes]
     ]:
@@ -89,4 +90,4 @@ class Environment(CRLEnvironment[np.ndarray]):
 
 
 if __name__ == "__main__":
-    create_environment_server(Environment)
+    create_environment_server(CRLGymEnvironmentAdapter(Environment))
