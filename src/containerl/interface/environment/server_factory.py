@@ -6,9 +6,9 @@ import traceback
 from concurrent import futures
 
 import grpc
-import gymnasium as gym
 import msgpack
 import numpy as np
+from gymnasium import Env, spaces
 
 from ..proto_pb2 import (
     Empty,
@@ -33,7 +33,6 @@ from ..utils import (
     numpy_to_native,
     numpy_to_native_space,
 )
-from .server import CRLEnvironmentBase
 
 
 class EnvironmentServer(
@@ -43,9 +42,11 @@ class EnvironmentServer(
 
     def __init__(
         self,
-        environment: CRLEnvironmentBase,
+        environment_class: type[Env[dict[str, AllowedTypes], AllowedTypes]],
     ) -> None:
-        self.env = environment
+        self.logger = logging.getLogger("containerl.environment_server")
+        self.environment_class = environment_class
+        self.env: Env[dict[str, AllowedTypes], AllowedTypes] | None = None
         self.environment_type: EnvironmentType = EnvironmentType.STANDARD
         self.num_envs: int = 1
         self.space_type_map: dict[str, AllowedSpaces] = {}
@@ -65,36 +66,30 @@ class EnvironmentServer(
                 init_args["render_mode"] = request.render_mode
 
             # Create the environment with all arguments
-            if self.env is None:
-                raise Exception("Environment class not provided.")
-            self.env.init(**init_args)
+            self.env = self.environment_class(**init_args)
 
             # Create response with space information
             response = SpacesResponse()
 
-            observation_space = self.env.observation_space()
-
             # Handle observation space (Dict space)
-            if not isinstance(observation_space, gym.spaces.Dict):
+            if not isinstance(self.env.observation_space, spaces.Dict):
                 raise Exception("Observation space must be a Dict")
 
-            for space_name, space in observation_space.spaces.items():
+            for space_name, space in self.env.observation_space.spaces.items():
                 self.space_type_map[space_name] = space
                 space_proto = response.observation_space[space_name]
                 numpy_to_native_space(space, space_proto)
 
             # Handle action space
-            action_space = self.env.action_space()
-            if isinstance(action_space, gym.spaces.MultiBinary):
-                if len(action_space.shape) != 1:
+            if isinstance(self.env.action_space, spaces.MultiBinary):
+                if len(self.env.action_space.shape) != 1:
                     raise Exception(
                         "MultiBinary action space must be 1D, consider flattening it."
                     )
-            numpy_to_native_space(action_space, response.action_space)
-
+            numpy_to_native_space(self.env.action_space, response.action_space)
             response.num_envs = self.num_envs
             response.environment_type = self.environment_type
-            render_mode = self.env.render_mode()
+            render_mode = self.env.render_mode
             if render_mode is None:
                 render_mode = "None"
             response.render_mode = render_mode
@@ -160,7 +155,7 @@ class EnvironmentServer(
 
             # Deserialize the action
             action = msgpack.unpackb(request.action, raw=False)
-            action = native_to_numpy(action, self.env.action_space())
+            action = native_to_numpy(action, self.env.action_space)
 
             # Take a step in the environment
             obs, reward, terminated, truncated, info = self.env.step(action)
@@ -201,9 +196,9 @@ class EnvironmentServer(
             render_output = self.env.render()
 
             # If it's a numpy array, directly serialize it
-            if isinstance(render_output, np.ndarray):
+            if isinstance(render_output, np.ndarray) and render_output.ndim == 3:
                 # Create a dict with array metadata and data for proper reconstruction
-                array_data = {
+                array_data: dict[str, tuple[int, ...] | str | bytes] = {
                     "shape": render_output.shape,
                     "dtype": str(render_output.dtype),
                     "data": render_output.tobytes(),
@@ -212,6 +207,9 @@ class EnvironmentServer(
                 return RenderResponse(render_data=render_data)
             else:
                 # For non-array outputs, return empty data
+                self.logger.warning(
+                    "Render output is not an image, i.e. 3D, np.int8 numpy array; returning empty render data."
+                )
                 return RenderResponse(render_data=b"")
         except Exception as e:
             stack_trace = traceback.format_exc()
@@ -243,12 +241,12 @@ class EnvironmentServer(
 
 
 def create_environment_server(
-    environment: CRLEnvironmentBase,
+    environment_class: type[Env[dict[str, AllowedTypes], AllowedTypes]],
     port: int = 50051,
 ) -> None:
     """Start the gRPC server."""
     logger = logging.getLogger("containerl.environment_server")
-    environment_server = EnvironmentServer(environment)
+    environment_server = EnvironmentServer(environment_class)
     server = grpc.server(futures.ThreadPoolExecutor(max_workers=10))
     add_EnvironmentServiceServicer_to_server(environment_server, server)
     server.add_insecure_port(f"[::]:{port}")

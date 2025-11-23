@@ -11,12 +11,10 @@ from .interface.environment.client_vec import VecEnvironmentClient
 from .interface.environment.client_vec import (
     main as validate_vec_environment_connection,
 )
-from .interface.environment.server import CRLEnvironmentBase, CRLGymEnvironmentAdapter
 from .interface.environment.server_factory import (
     create_environment_server,
 )
 from .interface.environment.server_factory_vec import (
-    CRLVecEnvironment,
     create_vec_environment_server,
 )
 from .interface.proto_pb2 import (
@@ -58,7 +56,6 @@ from .interface.utils import (
 
 __all__ = [
     "CRLEnvironmentClient",
-    "CRLGymEnvironmentAdapter",
     "VecEnvironmentClient",
     "validate_vec_environment_connection",
     "validate_environment_connection",
@@ -80,9 +77,7 @@ __all__ = [
     "ActionResponse",
     "create_environment_server",
     "create_vec_environment_server",
-    "CRLVecEnvironment",
     "add_EnvironmentServiceServicer_to_server",
-    "CRLEnvironmentBase",
     "create_agent_server",
     "add_AgentServiceServicer_to_server",
     "EnvironmentType",

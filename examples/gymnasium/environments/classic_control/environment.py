@@ -9,7 +9,6 @@ from numpy.typing import NDArray
 from containerl import (
     AllowedInfoValueTypes,
     AllowedTypes,
-    CRLGymEnvironmentAdapter,
     create_environment_server,
     process_info,
 )
@@ -74,4 +73,4 @@ class Environment(gym.Env[dict[str, AllowedTypes], AllowedTypes]):
 
 
 if __name__ == "__main__":
-    create_environment_server(CRLGymEnvironmentAdapter(Environment))
+    create_environment_server(Environment)

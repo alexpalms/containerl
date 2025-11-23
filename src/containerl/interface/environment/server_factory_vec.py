@@ -3,7 +3,6 @@
 # gRPC Server Implementation
 import logging
 import traceback
-from abc import abstractmethod
 from concurrent import futures
 from typing import Any
 
@@ -11,7 +10,8 @@ import grpc
 import gymnasium as gym
 import msgpack
 import numpy as np
-from numpy.typing import NDArray
+
+from containerl.interface.environment.server_vec import CRLVecEnvironmentBase
 
 from ..proto_pb2 import (
     Empty,
@@ -29,54 +29,11 @@ from ..proto_pb2_grpc import (
     add_EnvironmentServiceServicer_to_server,
 )
 from ..utils import (
-    AllowedInfoValueTypes,
     AllowedSerializableTypes,
     AllowedSpaces,
-    AllowedTypes,
     native_to_numpy_vec,
     numpy_to_native_space,
 )
-
-
-class CRLVecEnvironment(
-    gym.Env[
-        dict[str, NDArray[np.floating | np.integer[Any]]],
-        NDArray[np.floating | np.integer[Any]],
-    ]
-):
-    """Abstract base class for Vectorized Environments."""
-
-    num_envs: int
-    single_observation_space: gym.spaces.Space[dict[str, AllowedTypes]]
-    single_action_space: gym.spaces.Space[AllowedTypes]
-
-    @abstractmethod
-    def reset(  # pyright: ignore[reportIncompatibleMethodOverride]
-        self, seed: int | None = None, options: dict[str, Any] | None = None
-    ) -> tuple[
-        dict[str, NDArray[np.floating | np.integer[Any]]],
-        list[dict[str, AllowedInfoValueTypes]],
-    ]:
-        """Reset the environment."""
-        pass
-
-    @abstractmethod
-    def step(  # pyright: ignore[reportIncompatibleMethodOverride]
-        self, action: NDArray[np.floating | np.integer[Any]]
-    ) -> tuple[
-        dict[str, NDArray[np.floating | np.integer[Any]]],
-        NDArray[np.floating],
-        NDArray[np.bool_],
-        NDArray[np.bool_],
-        list[dict[str, AllowedInfoValueTypes]],
-    ]:
-        """Take a step in the environment."""
-        pass
-
-    @abstractmethod
-    def render(self) -> NDArray[np.uint8] | None:
-        """Render the environment and return an image as a numpy array if applicable."""
-        pass
 
 
 class VecEnvironmentServicer(
@@ -86,9 +43,9 @@ class VecEnvironmentServicer(
 
     def __init__(
         self,
-        environment_class: type[CRLVecEnvironment],
+        environment_class: type[CRLVecEnvironmentBase],
     ) -> None:
-        self.env: CRLVecEnvironment | None = None
+        self.env: CRLVecEnvironmentBase | None = None
         self.environment_class = environment_class
         self.environment_type: EnvironmentType = EnvironmentType.VECTORIZED
         self.num_envs: int = 1
@@ -295,7 +252,7 @@ class VecEnvironmentServicer(
 
 
 def create_vec_environment_server(
-    environment_class: type[CRLVecEnvironment],
+    environment_class: type[CRLVecEnvironmentBase],
     port: int = 50051,
 ) -> None:
     """Start the gRPC server."""
