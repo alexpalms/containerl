@@ -15,6 +15,7 @@ from .interface.environment.server_factory import (
     create_environment_server,
 )
 from .interface.environment.server_factory_vec import (
+    CRLVecGymEnvironment,
     create_vec_environment_server,
 )
 from .interface.proto_pb2 import (
@@ -95,4 +96,5 @@ __all__ = [
     "process_info",
     "AllowedSerializableTypes",
     "CRLAgent",
+    "CRLVecGymEnvironment",
 ]
