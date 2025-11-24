@@ -76,9 +76,13 @@ reportMissingImports = "error"
 reportMissingParameterType = "error"
 reportMissingTypeArgument = "error"
 reportUntypedFunctionDecorator = "error"
-reportUntypedFunctionCall = "error"
-reportMissingTypeStubs = "none"
+reportMissingTypeStubs = "error"
 extraPaths = ["stubs"]
+exclude = [
+  "src/containerl/interface/proto_pb2*.*",
+  "examples/anylogic/stock_management/environment/*",
+  "examples/anylogic/stock_management/agent/basic_ppo.py",
+]
 
 [tool.mypy]
 strict = true
@@ -88,6 +92,7 @@ files = ["src", "examples", "tests", "docs"]
 [tool.ruff]
 line-length = 88
 target-version = "py312"
+exclude = ["src/containerl/interface/proto_pb2*.*"]
 
 [tool.ruff.lint]
 select = [

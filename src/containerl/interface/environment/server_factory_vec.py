@@ -5,7 +5,7 @@ import logging
 import traceback
 from abc import abstractmethod
 from concurrent import futures
-from typing import Any
+from typing import Any, cast
 
 import grpc
 import msgpack
@@ -235,14 +235,14 @@ class VecEnvironmentServicer(
                 return RenderResponse()
 
             # Get the render output directly
-            render_output = self.env.render()
+            render_output = cast(Any, self.env.render())
 
             # If it's a numpy array, directly serialize it
             if isinstance(render_output, np.ndarray) and render_output.ndim == 3:
                 # Create a dict with array metadata and data for proper reconstruction
                 array_data: dict[str, tuple[int, ...] | str | bytes] = {
-                    "shape": render_output.shape,
-                    "dtype": str(render_output.dtype),
+                    "shape": render_output.shape,  # pyright: ignore[reportUnknownMemberType]
+                    "dtype": str(render_output.dtype),  # pyright: ignore
                     "data": render_output.tobytes(),
                 }
                 render_data = msgpack.packb(array_data, use_bin_type=True)
