@@ -235,7 +235,7 @@ class CRLGymEnvironmentAdapter(gym.Env[dict[str, AllowedTypes], AllowedTypes]):
         """Take a step in the environment."""
         return self.client.step(action)
 
-    def render(self) -> NDArray[np.uint8] | None:
+    def render(self) -> NDArray[np.uint8] | None:  # type: ignore
         """Render the environment."""
         return self.client.render()
 

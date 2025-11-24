@@ -48,7 +48,7 @@ class CRLVecGymEnvironment(
     num_envs: int
 
     @abstractmethod
-    def reset(  # pyright: ignore[reportIncompatibleMethodOverride]
+    def reset(  # type: ignore
         self, *, seed: int | None = None, options: dict[str, Any] | None = None
     ) -> tuple[
         dict[str, NDArray[np.floating | np.integer[Any]]],
@@ -58,7 +58,7 @@ class CRLVecGymEnvironment(
         raise NotImplementedError
 
     @abstractmethod
-    def step(  # pyright: ignore[reportIncompatibleMethodOverride]
+    def step(  # type: ignore
         self, action: NDArray[np.floating | np.integer[Any]]
     ) -> tuple[
         dict[str, NDArray[np.floating | np.integer[Any]]],
@@ -87,7 +87,7 @@ class VecEnvironmentServicer(
         self.num_envs: int = 1
         self.space_type_map: dict[str, AllowedSpaces] = {}
 
-    def Init(
+    def Init(  # noqa: N802 #  gRPC method names use UpperCamelCase
         self, request: InitRequest, context: grpc.ServicerContext
     ) -> SpacesResponse:
         """Initialize the environment and return space information."""
@@ -145,7 +145,7 @@ class VecEnvironmentServicer(
             )
             return SpacesResponse()
 
-    def Reset(
+    def Reset(  # noqa: N802 #  gRPC method names use UpperCamelCase
         self,
         request: ResetRequest,
         context: grpc.ServicerContext,
@@ -187,7 +187,7 @@ class VecEnvironmentServicer(
             )
             return ResetResponse()
 
-    def Step(self, request: StepRequest, context: grpc.ServicerContext) -> StepResponse:
+    def Step(self, request: StepRequest, context: grpc.ServicerContext) -> StepResponse:  # noqa: N802 #  gRPC method names use UpperCamelCase
         """Take a step in the environment."""
         try:
             if self.env is None:
@@ -226,7 +226,7 @@ class VecEnvironmentServicer(
             )
             return StepResponse()
 
-    def Render(self, request: Empty, context: grpc.ServicerContext) -> RenderResponse:
+    def Render(self, request: Empty, context: grpc.ServicerContext) -> RenderResponse:  # noqa: N802 #  gRPC method names use UpperCamelCase
         """Render the environment."""
         try:
             if self.env is None:
@@ -261,11 +261,11 @@ class VecEnvironmentServicer(
             )
             return RenderResponse()
 
-    def Close(self, request: Empty, context: grpc.ServicerContext) -> Empty:
+    def Close(self, request: Empty, context: grpc.ServicerContext) -> Empty:  # noqa: N802 #  gRPC method names use UpperCamelCase
         """Close the environment."""
         try:
             if self.env is not None:
-                self.env.close()
+                self.env.close()  # type: ignore
                 self.env = None
             return Empty()
         except Exception as e:

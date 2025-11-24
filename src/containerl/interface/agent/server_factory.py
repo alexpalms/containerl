@@ -66,7 +66,7 @@ def build_agent_server(
             if not isinstance(self.observation_space, gym.spaces.Dict):
                 raise Exception("Observation space must be a Dict")
 
-        def GetSpaces(
+        def GetSpaces(  # noqa: N802 #  gRPC method names use UpperCamelCase
             self, request: Empty, context: grpc.ServicerContext
         ) -> SpacesResponse:
             """Return agent space information."""
@@ -97,7 +97,7 @@ def build_agent_server(
                 )
                 return SpacesResponse()
 
-        def GetAction(
+        def GetAction(  # noqa: N802 #  gRPC method names use UpperCamelCase
             self, request: ObservationRequest, context: grpc.ServicerContext
         ) -> ActionResponse:
             """Get the action from the agent."""

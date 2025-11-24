@@ -136,7 +136,7 @@ class SpacesResponse(_message.Message):
         key: str
         value: Space
         def __init__(
-            self, key: str | None = ..., value: Space | _Mapping | None = ...
+            self, key: str | None = ..., value: Space | _Mapping[str, Space] | None = ...
         ) -> None: ...
 
     OBSERVATION_SPACE_FIELD_NUMBER: _ClassVar[int]
@@ -152,7 +152,7 @@ class SpacesResponse(_message.Message):
     def __init__(
         self,
         observation_space: _Mapping[str, Space] | None = ...,
-        action_space: Space | _Mapping | None = ...,
+        action_space: Space | _Mapping[str, Space] | None = ...,
         num_envs: int | None = ...,
         environment_type: EnvironmentType | str | None = ...,
         render_mode: str | None = ...,
