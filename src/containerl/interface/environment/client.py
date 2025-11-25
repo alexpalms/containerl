@@ -135,10 +135,7 @@ class CRLEnvironmentClient:
     ]:
         """Take a step in the environment."""
         # Convert NumPy arrays to lists for serialization
-        if self.environment_type == EnvironmentType.VECTORIZED:
-            native_action = action.tolist()
-        else:
-            native_action = numpy_to_native(action)
+        native_action = numpy_to_native(action)
 
         # Serialize the action
         serialized_action = msgpack.packb(native_action, use_bin_type=True)
@@ -214,8 +211,19 @@ class CRLGymEnvironmentAdapter(gym.Env[dict[str, AllowedTypes], AllowedTypes]):
 
     metadata = {"render_modes": ["rgb_array"], "render_fps": 30}
 
-    def __init__(self, server_address: str, timeout: float = 60.0, **init_args: Any):
-        self.client = CRLEnvironmentClient(server_address, timeout=timeout, **init_args)
+    def __init__(
+        self,
+        server_address: str,
+        timeout: float = 60.0,
+        render_mode: str | None = None,
+        **init_args: dict[str, Any],
+    ):
+        self.client = CRLEnvironmentClient(
+            server_address,
+            timeout=timeout,
+            render_mode=render_mode,
+            **init_args,
+        )
         self.observation_space = self.client.observation_space
         self.action_space = self.client.action_space
         self.render_mode = self.client.render_mode
@@ -249,7 +257,10 @@ class CRLGymEnvironmentAdapter(gym.Env[dict[str, AllowedTypes], AllowedTypes]):
 
 
 def environment_check(
-    server_address: str = "localhost:50051", num_steps: int = 5
+    server_address: str = "localhost:50051",
+    num_steps: int = 5,
+    render_mode: str | None = None,
+    **init_args: dict[str, Any],
 ) -> None:
     """
     Run a simple test of the EnvironmentClient.
@@ -266,7 +277,9 @@ def environment_check(
     )
     try:
         # Create a remote environment
-        env = CRLEnvironmentClient(server_address)
+        env = CRLEnvironmentClient(
+            server_address, timeout=60, render_mode=render_mode, **init_args
+        )
 
         # Reset the environment
         obs, info = env.reset()
@@ -320,7 +333,11 @@ def environment_check(
         raise
 
 
-def gym_environment_check(server_address: str = "localhost:50051") -> None:
+def gym_environment_check(
+    server_address: str = "localhost:50051",
+    render_mode: str | None = None,
+    **init_args: dict[str, Any],
+) -> None:
     """
     Run a Gym Environment check.
 
@@ -336,7 +353,9 @@ def gym_environment_check(server_address: str = "localhost:50051") -> None:
     )
     try:
         # Create a remote environment
-        env = CRLGymEnvironmentAdapter(server_address)
+        env = CRLGymEnvironmentAdapter(
+            server_address, timeout=60, render_mode=render_mode, **init_args
+        )
 
         logger.info("Running Gym environment check without render check...")
         check_env(env, skip_render_check=True)

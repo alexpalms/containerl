@@ -24,10 +24,10 @@ class Environment(gym.Env[dict[str, AllowedTypes], AllowedTypes]):
         - "LunarLander-v3"
     """
 
-    def __init__(self) -> None:
-        self.render_mode = "rgb_array"
+    def __init__(self, render_mode: str, env_name: str) -> None:
+        self.render_mode = render_mode
         self._env: gym.Env[np.ndarray, AllowedTypes] = gym.make(  # pyright: ignore[reportUnknownMemberType]
-            "LunarLander-v3", render_mode=self.render_mode
+            env_name, render_mode=self.render_mode
         )
 
         self.observation_space = gym.spaces.Dict(

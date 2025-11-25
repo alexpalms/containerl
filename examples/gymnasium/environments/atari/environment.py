@@ -18,12 +18,12 @@ from containerl import (
 class Environment(gym.Env[dict[str, AllowedTypes], AllowedTypes]):
     """Environment wrapper for Atari environments using Gymnasium and ALE."""
 
-    def __init__(self) -> None:
+    def __init__(self, render_mode: str, env_name: str, obs_type: str) -> None:
         # Available Envs: https://ale.farama.org/environments/
-        self.render_mode = "rgb_array"
+        self.render_mode = render_mode
         gym.register_envs(ale_py)
         self._env: gym.Env[np.ndarray, AllowedTypes] = gym.make(  # pyright: ignore[reportUnknownMemberType]
-            "ALE/Breakout-v5", render_mode=self.render_mode, obs_type="ram"
+            f"{env_name}", render_mode=self.render_mode, obs_type=obs_type
         )
 
         self.observation_space = gym.spaces.Dict(

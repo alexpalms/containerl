@@ -25,7 +25,6 @@ from ..utils import (
     AllowedTypes,
     native_to_numpy_space,
     native_to_numpy_vec,
-    numpy_to_native,
 )
 from .server_factory_vec import CRLVecGymEnvironment
 
@@ -134,10 +133,7 @@ class CRLVecEnvironmentClient:
     ]:
         """Take a step in the environment."""
         # Convert NumPy arrays to lists for serialization
-        if self.environment_type == EnvironmentType.VECTORIZED:
-            native_action = action.tolist()
-        else:
-            native_action = numpy_to_native(action)
+        native_action = action.tolist()
 
         # Serialize the action
         serialized_action = msgpack.packb(native_action, use_bin_type=True)
@@ -222,9 +218,15 @@ class CRLVecGymEnvironmentAdapter(CRLVecGymEnvironment):
 
     metadata = {"render_modes": ["rgb_array"], "render_fps": 30}
 
-    def __init__(self, server_address: str, timeout: float = 60.0, **init_args: Any):
+    def __init__(
+        self,
+        server_address: str,
+        timeout: float = 60.0,
+        render_mode: str | None = None,
+        **init_args: Any,
+    ):
         self.client = CRLVecEnvironmentClient(
-            server_address, timeout=timeout, **init_args
+            server_address, timeout=timeout, render_mode=render_mode, **init_args
         )
         self.observation_space = self.client.observation_space
         self.action_space = self.client.action_space
