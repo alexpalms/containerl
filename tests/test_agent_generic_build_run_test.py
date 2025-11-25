@@ -4,7 +4,7 @@ import logging
 
 import pytest
 
-from containerl import validate_agent_connection
+from containerl import agent_check
 from containerl.cli import build_run, stop_container
 
 # Test cases with descriptive IDs
@@ -46,7 +46,7 @@ def test_build_run_agent(env_folder: str) -> None:
 
     success = False
     try:
-        validate_agent_connection("localhost:50051")
+        agent_check("localhost:50051")
         success = True
     except Exception as e:
         logger.error(f"Error testing agent connection: {str(e)}")

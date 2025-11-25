@@ -260,7 +260,9 @@ class CRLVecGymEnvironmentAdapter(CRLVecGymEnvironment):
         self.client.close()
 
 
-def main(server_address: str = "localhost:50051", num_steps: int = 5) -> None:
+def vec_environment_check(
+    server_address: str = "localhost:50051", num_steps: int = 5
+) -> None:
     """
     Run a simple test of the EnvironmentClient.
 
@@ -343,28 +345,3 @@ def main(server_address: str = "localhost:50051", num_steps: int = 5) -> None:
         logger.info(f"\nError: {e}")
         logger.info("Failed to connect to or interact with the environment server.")
         raise
-
-
-# Example usage
-if __name__ == "__main__":
-    import argparse
-
-    parser = argparse.ArgumentParser(description="Test the EnvironmentClient")
-    parser.add_argument(
-        "--address",
-        default="localhost:50051",
-        help="Server address (default: localhost:50051)",
-    )
-    parser.add_argument(
-        "--steps",
-        type=int,
-        default=5,
-        help="Number of steps to run in the test (default: 5)",
-    )
-
-    args = parser.parse_args()
-
-    try:
-        main(args.address, args.steps)
-    except Exception:
-        sys.exit(1)

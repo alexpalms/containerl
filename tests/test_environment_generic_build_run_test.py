@@ -7,7 +7,7 @@ import pytest
 from containerl import (
     environment_check,
     gym_environment_check,
-    validate_vec_environment_connection,
+    vec_environment_check,
 )
 from containerl.cli import build_run, stop_container
 
@@ -70,7 +70,7 @@ def test_build_run_environment(env_folder: str) -> None:
     success = False
     try:
         if "vectorized" in env_folder:
-            validate_vec_environment_connection("localhost:50051")
+            vec_environment_check("localhost:50051")
         else:
             environment_check("localhost:50051")
             gym_environment_check("localhost:50051")

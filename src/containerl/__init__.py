@@ -1,7 +1,6 @@
 __version__ = "0.1.0"
 from . import cli
-from .interface.agent.client import AgentClient
-from .interface.agent.client import main as validate_agent_connection
+from .interface.agent.client import AgentClient, agent_check
 from .interface.agent.server_factory import CRLAgent, create_agent_server
 from .interface.environment.client import (
     CRLEnvironmentClient,
@@ -12,9 +11,7 @@ from .interface.environment.client import (
 from .interface.environment.client_vec import (
     CRLVecEnvironmentClient,
     CRLVecGymEnvironmentAdapter,
-)
-from .interface.environment.client_vec import (
-    main as validate_vec_environment_connection,
+    vec_environment_check,
 )
 from .interface.environment.server_factory import (
     create_environment_server,
@@ -62,11 +59,11 @@ from .interface.utils import (
 
 __all__ = [
     "CRLEnvironmentClient",
-    "validate_vec_environment_connection",
+    "vec_environment_check",
     "environment_check",
     "gym_environment_check",
     "AgentClient",
-    "validate_agent_connection",
+    "agent_check",
     "EnvironmentService",
     "AgentService",
     "EnvironmentServiceStub",

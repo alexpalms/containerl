@@ -267,7 +267,7 @@ def test_connection(
     try:
         if agent_mode:
             # Import the agent client module's main function
-            from containerl import validate_agent_connection as validate_connection
+            from containerl import agent_check as validate_connection
 
             logger.info(f"Testing agent connection to {server_address}...")
         else:
