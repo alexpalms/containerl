@@ -3,9 +3,11 @@ from . import cli
 from .interface.agent.client import AgentClient
 from .interface.agent.client import main as validate_agent_connection
 from .interface.agent.server_factory import CRLAgent, create_agent_server
-from .interface.environment.client import CRLEnvironmentClient, CRLGymEnvironmentAdapter
 from .interface.environment.client import (
-    main as validate_environment_connection,
+    CRLEnvironmentClient,
+    CRLGymEnvironmentAdapter,
+    environment_check,
+    gym_environment_check,
 )
 from .interface.environment.client_vec import (
     CRLVecEnvironmentClient,
@@ -61,7 +63,8 @@ from .interface.utils import (
 __all__ = [
     "CRLEnvironmentClient",
     "validate_vec_environment_connection",
-    "validate_environment_connection",
+    "environment_check",
+    "gym_environment_check",
     "AgentClient",
     "validate_agent_connection",
     "EnvironmentService",

@@ -272,14 +272,12 @@ def test_connection(
             logger.info(f"Testing agent connection to {server_address}...")
         else:
             # Import the environment client module's main function
-            from containerl import (
-                validate_environment_connection as validate_connection,
-            )
+            from containerl import environment_check as validate_connection
 
             logger.info(f"Testing environment connection to {server_address}...")
 
         # Call the client's main function
-        validate_connection(server_address, num_steps)
+        validate_connection(server_address, num_steps=num_steps)
 
         logger.info(
             f"Successfully connected to the {'agent' if agent_mode else 'environment'} server at {server_address}"

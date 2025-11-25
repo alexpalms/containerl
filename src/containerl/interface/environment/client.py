@@ -9,6 +9,9 @@ import gymnasium as gym
 import msgpack
 import numpy as np
 from gymnasium import spaces
+from gymnasium.utils.env_checker import (
+    check_env,  # pyright: ignore[reportUnknownVariableType]
+)
 from numpy.typing import NDArray
 
 # Add the interface directory to the path to import the generated gRPC code
@@ -221,6 +224,7 @@ class CRLGymEnvironmentAdapter(gym.Env[dict[str, AllowedTypes], AllowedTypes]):
         self, *, seed: int | None = None, options: dict[str, Any] | None = None
     ) -> tuple[dict[str, AllowedTypes], dict[str, AllowedInfoValueTypes]]:
         """Reset the environment."""
+        super().reset(seed=seed)
         return self.client.reset(seed=seed, options=options)
 
     def step(
@@ -244,7 +248,9 @@ class CRLGymEnvironmentAdapter(gym.Env[dict[str, AllowedTypes], AllowedTypes]):
         self.client.close()
 
 
-def main(server_address: str = "localhost:50051", num_steps: int = 5) -> None:
+def environment_check(
+    server_address: str = "localhost:50051", num_steps: int = 5
+) -> None:
     """
     Run a simple test of the EnvironmentClient.
 
@@ -314,28 +320,41 @@ def main(server_address: str = "localhost:50051", num_steps: int = 5) -> None:
         raise
 
 
-# Example usage
-if __name__ == "__main__":
-    import argparse
+def gym_environment_check(server_address: str = "localhost:50051") -> None:
+    """
+    Run a Gym Environment check.
 
-    parser = argparse.ArgumentParser(description="Test the EnvironmentClient")
-    parser.add_argument(
-        "--address",
-        default="localhost:50051",
-        help="Server address (default: localhost:50051)",
+    Args:
+        server_address: The address of the server (e.g., "localhost:50051")
+        num_steps: Number of steps to run in the test
+    """
+    logger = logging.getLogger("containerl.gym_environment_client")
+    logging.basicConfig(
+        stream=sys.stdout,
+        level=logging.INFO,
+        format="%(asctime)s %(levelname)s:%(name)s: %(message)s",
     )
-    parser.add_argument(
-        "--steps",
-        type=int,
-        default=5,
-        help="Number of steps to run in the test (default: 5)",
-    )
-
-    args = parser.parse_args()
-
     try:
-        main(args.address, args.steps)
-    except Exception:
-        import sys
+        # Create a remote environment
+        env = CRLGymEnvironmentAdapter(server_address)
 
-        sys.exit(1)
+        logger.info("Running Gym environment check without render check...")
+        check_env(env, skip_render_check=True)
+        logger.info("Gym environment check passed.")
+
+        logger.info("Running Gym environment check with render check...")
+        check_env(
+            env,
+        )
+        logger.info("Gym environment check with render passed.")
+
+        # Close the environment
+        env.close()
+
+        # Print success message if no errors occurred
+        logger.info("\nSuccess! The environment client is working correctly.")
+
+    except Exception as e:
+        logger.info(f"\nError: {e}")
+        logger.info("Failed to connect to or interact with the environment server.")
+        raise
