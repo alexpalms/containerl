@@ -17,8 +17,8 @@ from numpy.typing import NDArray
 # Add the interface directory to the path to import the generated gRPC code
 from ..proto_pb2 import (
     Empty,
+    EnvInitRequest,
     EnvironmentType,
-    InitRequest,
     ResetRequest,
     StepRequest,
 )
@@ -42,7 +42,7 @@ class CRLEnvironmentClient:
         server_address: str,
         timeout: float = 60.0,
         render_mode: str | None = None,
-        **init_args: dict[str, Any],
+        **init_args: dict[str, Any] | None,
     ) -> None:
         # Connect to the gRPC server with timeout
         self.channel = grpc.insecure_channel(server_address)
@@ -58,7 +58,7 @@ class CRLEnvironmentClient:
         self.stub = EnvironmentServiceStub(self.channel)
 
         # Initialize the remote environment
-        init_request = InitRequest()
+        init_request = EnvInitRequest()
         if render_mode is not None:
             init_request.render_mode = render_mode
 
@@ -66,20 +66,20 @@ class CRLEnvironmentClient:
             init_request.init_args = msgpack.packb(init_args, use_bin_type=True)
 
         # Call the Init method and get space information
-        spaces_response = self.stub.Init(init_request)
+        env_init_response = self.stub.Init(init_request)
 
         # Set up observation space
         space_dict: dict[str, AllowedSpaces] = {}
-        for name, proto_space in spaces_response.observation_space.items():
+        for name, proto_space in env_init_response.observation_space.items():
             space_dict[name] = native_to_numpy_space(proto_space)
         self.observation_space = spaces.Dict(space_dict)
 
         # Set up action space
-        self.action_space = native_to_numpy_space(spaces_response.action_space)
+        self.action_space = native_to_numpy_space(env_init_response.action_space)
 
         # Set up number of environments
-        self.num_envs = spaces_response.num_envs
-        self.environment_type = spaces_response.environment_type
+        self.num_envs = env_init_response.num_envs
+        self.environment_type = env_init_response.environment_type
         if self.environment_type != EnvironmentType.STANDARD:
             raise Exception(
                 "EnvironmentClient only supports STANDARD environments. "
@@ -88,9 +88,14 @@ class CRLEnvironmentClient:
 
         # Store render mode
         self.render_mode = (
-            spaces_response.render_mode
-            if spaces_response.render_mode != "None"
+            env_init_response.render_mode
+            if env_init_response.render_mode != "None"
             else None
+        )
+
+        # Store Environment intialization info if provided
+        self.init_info: dict[str, AllowedInfoValueTypes] = msgpack.unpackb(
+            env_init_response.info, raw=False
         )
 
     def reset(
@@ -227,6 +232,7 @@ class CRLGymEnvironmentAdapter(gym.Env[dict[str, AllowedTypes], AllowedTypes]):
         self.observation_space = self.client.observation_space
         self.action_space = self.client.action_space
         self.render_mode = self.client.render_mode
+        self.init_info = self.client.init_info
 
     def reset(
         self, *, seed: int | None = None, options: dict[str, Any] | None = None

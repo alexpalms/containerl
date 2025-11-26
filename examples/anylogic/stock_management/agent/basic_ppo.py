@@ -1,6 +1,7 @@
 """Simple DeepRL Agent for Anylogic stock problem."""
 
 import os
+from typing import Any
 
 import numpy as np
 from gymnasium import spaces
@@ -12,7 +13,7 @@ from containerl import AllowedTypes, CRLAgent, create_agent_server
 class Agent(CRLAgent):
     """Simple DeepRL Agent for Anylogic stock problem."""
 
-    def __init__(self) -> None:
+    def __init__(self, model_name: str = "model.zip", device: str = "cpu") -> None:
         self.observation_space = spaces.Dict(
             {
                 "stock": spaces.Box(
@@ -26,11 +27,13 @@ class Agent(CRLAgent):
 
         self.action_space = spaces.Box(0, 50, shape=(1,), dtype=np.float32)
 
-        model_path = os.path.join(os.path.dirname(__file__), "model.zip")
+        model_path = os.path.join(os.path.dirname(__file__), model_name)
         if not os.path.exists(model_path):
             raise FileNotFoundError("Model file not found at {model_path}")
 
-        self.agent = PPO.load(model_path, device="cpu")
+        self.agent = PPO.load(model_path, device=device)
+
+        self.init_info: dict[str, Any] = {"model_name": model_name, "device": device}
 
     def get_action(self, observation: dict[str, AllowedTypes]) -> AllowedTypes:
         """Return the optimal action as calculated by the deepRL model."""
@@ -45,5 +48,4 @@ class Agent(CRLAgent):
 
 
 if __name__ == "__main__":
-    agent = Agent()
-    create_agent_server(agent)
+    create_agent_server(Agent)

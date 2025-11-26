@@ -5,7 +5,7 @@ import grpc
 
 from . import proto_pb2 as proto__pb2
 
-GRPC_GENERATED_VERSION = "1.74.0"
+GRPC_GENERATED_VERSION = "1.76.0"
 GRPC_VERSION = grpc.__version__
 _version_not_supported = False
 
@@ -39,8 +39,8 @@ class EnvironmentServiceStub:
         """
         self.Init = channel.unary_unary(
             "/containerl.EnvironmentService/Init",
-            request_serializer=proto__pb2.InitRequest.SerializeToString,
-            response_deserializer=proto__pb2.SpacesResponse.FromString,
+            request_serializer=proto__pb2.EnvInitRequest.SerializeToString,
+            response_deserializer=proto__pb2.EnvInitResponse.FromString,
             _registered_method=True,
         )
         self.Reset = channel.unary_unary(
@@ -107,8 +107,8 @@ def add_EnvironmentServiceServicer_to_server(servicer, server):
     rpc_method_handlers = {
         "Init": grpc.unary_unary_rpc_method_handler(
             servicer.Init,
-            request_deserializer=proto__pb2.InitRequest.FromString,
-            response_serializer=proto__pb2.SpacesResponse.SerializeToString,
+            request_deserializer=proto__pb2.EnvInitRequest.FromString,
+            response_serializer=proto__pb2.EnvInitResponse.SerializeToString,
         ),
         "Reset": grpc.unary_unary_rpc_method_handler(
             servicer.Reset,
@@ -161,8 +161,8 @@ class EnvironmentService:
             request,
             target,
             "/containerl.EnvironmentService/Init",
-            proto__pb2.InitRequest.SerializeToString,
-            proto__pb2.SpacesResponse.FromString,
+            proto__pb2.EnvInitRequest.SerializeToString,
+            proto__pb2.EnvInitResponse.FromString,
             options,
             channel_credentials,
             insecure,
@@ -304,10 +304,10 @@ class AgentServiceStub:
         Args:
             channel: A grpc.Channel.
         """
-        self.GetSpaces = channel.unary_unary(
-            "/containerl.AgentService/GetSpaces",
-            request_serializer=proto__pb2.Empty.SerializeToString,
-            response_deserializer=proto__pb2.SpacesResponse.FromString,
+        self.Init = channel.unary_unary(
+            "/containerl.AgentService/Init",
+            request_serializer=proto__pb2.AgentInitRequest.SerializeToString,
+            response_deserializer=proto__pb2.AgentInitResponse.FromString,
             _registered_method=True,
         )
         self.GetAction = channel.unary_unary(
@@ -321,7 +321,7 @@ class AgentServiceStub:
 class AgentServiceServicer:
     """Missing associated documentation comment in .proto file."""
 
-    def GetSpaces(self, request, context):
+    def Init(self, request, context):
         """Missing associated documentation comment in .proto file."""
         context.set_code(grpc.StatusCode.UNIMPLEMENTED)
         context.set_details("Method not implemented!")
@@ -336,10 +336,10 @@ class AgentServiceServicer:
 
 def add_AgentServiceServicer_to_server(servicer, server):
     rpc_method_handlers = {
-        "GetSpaces": grpc.unary_unary_rpc_method_handler(
-            servicer.GetSpaces,
-            request_deserializer=proto__pb2.Empty.FromString,
-            response_serializer=proto__pb2.SpacesResponse.SerializeToString,
+        "Init": grpc.unary_unary_rpc_method_handler(
+            servicer.Init,
+            request_deserializer=proto__pb2.AgentInitRequest.FromString,
+            response_serializer=proto__pb2.AgentInitResponse.SerializeToString,
         ),
         "GetAction": grpc.unary_unary_rpc_method_handler(
             servicer.GetAction,
@@ -361,7 +361,7 @@ class AgentService:
     """Missing associated documentation comment in .proto file."""
 
     @staticmethod
-    def GetSpaces(
+    def Init(
         request,
         target,
         options=(),
@@ -376,9 +376,9 @@ class AgentService:
         return grpc.experimental.unary_unary(
             request,
             target,
-            "/containerl.AgentService/GetSpaces",
-            proto__pb2.Empty.SerializeToString,
-            proto__pb2.SpacesResponse.FromString,
+            "/containerl.AgentService/Init",
+            proto__pb2.AgentInitRequest.SerializeToString,
+            proto__pb2.AgentInitResponse.FromString,
             options,
             channel_credentials,
             insecure,

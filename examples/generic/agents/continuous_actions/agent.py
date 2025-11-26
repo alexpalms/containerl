@@ -41,5 +41,4 @@ class Agent(CRLAgent):
 
 
 if __name__ == "__main__":
-    agent = Agent()
-    create_agent_server(agent)
+    create_agent_server(Agent)

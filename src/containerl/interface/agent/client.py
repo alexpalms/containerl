@@ -1,33 +1,36 @@
 """Client for connecting to a remote agent via gRPC."""
 
 import logging
+from typing import Any
 
 import grpc
 import msgpack
 from gymnasium import spaces
 
-from ..proto_pb2 import Empty, ObservationRequest
+from ..proto_pb2 import AgentInitRequest, ObservationRequest
 
 # Add the interface directory to the path to import the generated gRPC code
 from ..proto_pb2_grpc import AgentServiceStub
 from ..utils import (
+    AllowedInfoValueTypes,
     AllowedSerializableTypes,
     AllowedTypes,
     native_to_numpy,
     native_to_numpy_space,
     numpy_to_native,
 )
+from .server_factory import CRLAgent
 
 
-class AgentClient:
-    """
-    A Gym environment compatible agent that connects to a remote environment via gRPC.
+class AgentClient(CRLAgent):
+    """Client for connecting to a remote agent via gRPC."""
 
-    This class implements the Gym interface and forwards all calls to a remote
-    agent server.
-    """
-
-    def __init__(self, server_address: str, timeout: float = 60.0):
+    def __init__(
+        self,
+        server_address: str,
+        timeout: float = 60.0,
+        **init_args: dict[str, Any] | None,
+    ) -> None:
         # Connect to the gRPC server with timeout
         self.channel = grpc.insecure_channel(server_address)
         try:
@@ -42,19 +45,26 @@ class AgentClient:
         self.stub = AgentServiceStub(self.channel)
 
         # Initialize the remote environment
-        init_request = Empty()
+        init_request = AgentInitRequest()
+
+        if init_args:
+            init_request.init_args = msgpack.packb(init_args, use_bin_type=True)
 
         # Call the Init method and get space information
-        spaces_response = self.stub.GetSpaces(init_request)
+        agent_init_response = self.stub.Init(init_request)
 
         # Set up observation space
         space_dict = {}
-        for name, proto_space in spaces_response.observation_space.items():
+        for name, proto_space in agent_init_response.observation_space.items():
             space_dict[name] = native_to_numpy_space(proto_space)
         self.observation_space = spaces.Dict(space_dict)
 
         # Set up action space
-        self.action_space = native_to_numpy_space(spaces_response.action_space)
+        self.action_space = native_to_numpy_space(agent_init_response.action_space)
+
+        self.init_info: dict[str, AllowedInfoValueTypes] = msgpack.unpackb(
+            agent_init_response.info, raw=False
+        )
 
     def get_action(self, observation: dict[str, AllowedTypes]) -> AllowedTypes:
         """Get an action from the agent."""

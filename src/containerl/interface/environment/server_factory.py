@@ -13,12 +13,12 @@ from gymnasium import Env, spaces
 
 from ..proto_pb2 import (
     Empty,
+    EnvInitRequest,
+    EnvInitResponse,
     EnvironmentType,
-    InitRequest,
     RenderResponse,
     ResetRequest,
     ResetResponse,
-    SpacesResponse,
     StepRequest,
     StepResponse,
 )
@@ -53,8 +53,8 @@ class EnvironmentServer(
         self.space_type_map: dict[str, AllowedSpaces] = {}
 
     def Init(  # noqa: N802 #  gRPC method names use UpperCamelCase
-        self, request: InitRequest, context: grpc.ServicerContext
-    ) -> SpacesResponse:
+        self, request: EnvInitRequest, context: grpc.ServicerContext
+    ) -> EnvInitResponse:
         """Initialize the environment and return space information."""
         try:
             # Prepare initialization arguments
@@ -70,7 +70,7 @@ class EnvironmentServer(
             self.env = self.environment_class(**init_args)
 
             # Create response with space information
-            response = SpacesResponse()
+            response = EnvInitResponse()
 
             # Handle observation space (Dict space)
             if not isinstance(self.env.observation_space, spaces.Dict):
@@ -95,6 +95,10 @@ class EnvironmentServer(
                 render_mode = "None"
             response.render_mode = render_mode
 
+            if hasattr(self.env, "init_info"):
+                info = msgpack.packb(self.env.init_info, use_bin_type=True)  # pyright: ignore
+                response.info = info
+
             return response
         except Exception as e:
             stack_trace = traceback.format_exc()
@@ -102,7 +106,7 @@ class EnvironmentServer(
             context.set_details(
                 f"Error initializing environment: {str(e)}\nStacktrace: {stack_trace}"
             )
-            return SpacesResponse()
+            return EnvInitResponse()
 
     def Reset(  # noqa: N802 #  gRPC method names use UpperCamelCase
         self,

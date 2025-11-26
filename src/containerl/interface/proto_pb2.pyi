@@ -33,7 +33,13 @@ class ActionResponse(_message.Message):
     action: bytes
     def __init__(self, action: bytes | None = ...) -> None: ...
 
-class InitRequest(_message.Message):
+class AgentInitRequest(_message.Message):
+    __slots__ = ("init_args",)
+    INIT_ARGS_FIELD_NUMBER: _ClassVar[int]
+    init_args: bytes
+    def __init__(self, init_args: bytes | None = ...) -> None: ...
+
+class EnvInitRequest(_message.Message):
     __slots__ = ("render_mode", "init_args")
     RENDER_MODE_FIELD_NUMBER: _ClassVar[int]
     INIT_ARGS_FIELD_NUMBER: _ClassVar[int]
@@ -121,13 +127,14 @@ class Space(_message.Message):
         dtype: str | None = ...,
     ) -> None: ...
 
-class SpacesResponse(_message.Message):
+class EnvInitResponse(_message.Message):
     __slots__ = (
         "observation_space",
         "action_space",
         "num_envs",
         "environment_type",
         "render_mode",
+        "info",
     )
     class ObservationSpaceEntry(_message.Message):
         __slots__ = ("key", "value")
@@ -144,11 +151,13 @@ class SpacesResponse(_message.Message):
     NUM_ENVS_FIELD_NUMBER: _ClassVar[int]
     ENVIRONMENT_TYPE_FIELD_NUMBER: _ClassVar[int]
     RENDER_MODE_FIELD_NUMBER: _ClassVar[int]
+    INFO_FIELD_NUMBER: _ClassVar[int]
     observation_space: _containers.MessageMap[str, Space]
     action_space: Space
     num_envs: int
     environment_type: EnvironmentType
     render_mode: str
+    info: bytes
     def __init__(
         self,
         observation_space: _Mapping[str, Space] | None = ...,
@@ -156,4 +165,30 @@ class SpacesResponse(_message.Message):
         num_envs: int | None = ...,
         environment_type: EnvironmentType | str | None = ...,
         render_mode: str | None = ...,
+        info: bytes | None = ...,
+    ) -> None: ...
+
+class AgentInitResponse(_message.Message):
+    __slots__ = ("observation_space", "action_space", "info")
+    class ObservationSpaceEntry(_message.Message):
+        __slots__ = ("key", "value")
+        KEY_FIELD_NUMBER: _ClassVar[int]
+        VALUE_FIELD_NUMBER: _ClassVar[int]
+        key: str
+        value: Space
+        def __init__(
+            self, key: str | None = ..., value: Space | _Mapping[str, Space] | None = ...
+        ) -> None: ...
+
+    OBSERVATION_SPACE_FIELD_NUMBER: _ClassVar[int]
+    ACTION_SPACE_FIELD_NUMBER: _ClassVar[int]
+    INFO_FIELD_NUMBER: _ClassVar[int]
+    observation_space: _containers.MessageMap[str, Space]
+    action_space: Space
+    info: bytes
+    def __init__(
+        self,
+        observation_space: _Mapping[str, Space] | None = ...,
+        action_space: Space | _Mapping[str, Space] | None = ...,
+        info: bytes | None = ...,
     ) -> None: ...
