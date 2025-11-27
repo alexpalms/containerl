@@ -14,9 +14,7 @@ from containerl import (
 class Agent(CRLAgent):
     """Simple proportional Agent for Anylogic stock problem."""
 
-    def __init__(
-        self, target_stock: float = 5000, proportional_constant: float = 0.1
-    ) -> None:
+    def __init__(self, target_stock: float, proportional_constant: float) -> None:
         self.target_stock = target_stock
         self.proportional_constant = proportional_constant
         self.observation_space = spaces.Dict(

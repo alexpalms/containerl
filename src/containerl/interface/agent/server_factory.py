@@ -66,7 +66,6 @@ class AgentServicer(AgentServiceServicer):
             self.agent = self.agent_class(**init_args)
             self.observation_space = self.agent.observation_space
             action_space = self.agent.action_space
-            init_info = self.agent.init_info
 
             # Handle observation space (Dict space)
             if not isinstance(self.observation_space, gym.spaces.Dict):
@@ -87,9 +86,11 @@ class AgentServicer(AgentServiceServicer):
                     )
             numpy_to_native_space(action_space, response.action_space)
 
-            if hasattr(self.agent, "init_info"):
-                info = msgpack.packb(init_info, use_bin_type=True)
-                response.info = info
+            info = msgpack.packb(
+                self.agent.init_info if hasattr(self.agent, "init_info") else {},
+                use_bin_type=True,
+            )
+            response.info = info
 
             return response
         except Exception as e:

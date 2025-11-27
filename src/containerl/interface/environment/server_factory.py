@@ -95,9 +95,11 @@ class EnvironmentServer(
                 render_mode = "None"
             response.render_mode = render_mode
 
-            if hasattr(self.env, "init_info"):
-                info = msgpack.packb(self.env.init_info, use_bin_type=True)  # pyright: ignore
-                response.info = info
+            info = msgpack.packb(
+                self.env.init_info if hasattr(self.env, "init_info") else {},  # pyright: ignore
+                use_bin_type=True,
+            )
+            response.info = info
 
             return response
         except Exception as e:

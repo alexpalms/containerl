@@ -13,7 +13,7 @@ from containerl import AllowedTypes, CRLAgent, create_agent_server
 class Agent(CRLAgent):
     """Simple DeepRL Agent for Anylogic stock problem."""
 
-    def __init__(self, model_name: str = "model.zip", device: str = "cpu") -> None:
+    def __init__(self, model_name: str, device: str) -> None:
         self.observation_space = spaces.Dict(
             {
                 "stock": spaces.Box(

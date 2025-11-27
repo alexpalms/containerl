@@ -106,7 +106,11 @@ class AgentClient(CRLAgent):
         return action
 
 
-def agent_check(server_address: str = "localhost:50051", num_steps: int = 5) -> None:
+def agent_check(
+    server_address: str = "localhost:50051",
+    num_steps: int = 5,
+    **init_args: dict[str, Any] | None,
+) -> None:
     """
     Run a simple test of the EnvironmentClient.
 
@@ -117,7 +121,11 @@ def agent_check(server_address: str = "localhost:50051", num_steps: int = 5) -> 
     logger = logging.getLogger(__name__)
     try:
         # Create a remote agent
-        agent = AgentClient(server_address)
+        agent = AgentClient(
+            server_address,
+            timeout=60.0,
+            **init_args,
+        )
 
         # Run a few steps
         for _ in range(num_steps):
