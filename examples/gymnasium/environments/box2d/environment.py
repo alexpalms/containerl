@@ -9,13 +9,12 @@ from numpy.typing import NDArray
 from containerl import (
     AllowedInfoValueTypes,
     AllowedTypes,
-    CRLEnvironment,
     create_environment_server,
     process_info,
 )
 
 
-class Environment(CRLEnvironment[np.integer[Any]]):
+class Environment(gym.Env[dict[str, AllowedTypes], AllowedTypes]):
     """
     Gymnasium Box2D Environment Wrapper.
 
@@ -25,10 +24,10 @@ class Environment(CRLEnvironment[np.integer[Any]]):
         - "LunarLander-v3"
     """
 
-    def __init__(self) -> None:
-        self.render_mode = "rgb_array"
-        self._env: gym.Env[np.ndarray, np.integer[Any]] = gym.make(  # pyright: ignore[reportUnknownMemberType]
-            "LunarLander-v3", render_mode=self.render_mode
+    def __init__(self, render_mode: str, env_name: str) -> None:
+        self.render_mode = render_mode
+        self._env: gym.Env[np.ndarray, AllowedTypes] = gym.make(  # pyright: ignore[reportUnknownMemberType]
+            env_name, render_mode=self.render_mode
         )
 
         self.observation_space = gym.spaces.Dict(
@@ -48,7 +47,7 @@ class Environment(CRLEnvironment[np.integer[Any]]):
         return self._process_observation(obs), process_info(info)
 
     def step(
-        self, action: np.integer[Any]
+        self, action: AllowedTypes
     ) -> tuple[
         dict[str, AllowedTypes], float, bool, bool, dict[str, AllowedInfoValueTypes]
     ]:

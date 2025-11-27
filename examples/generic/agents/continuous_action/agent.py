@@ -5,11 +5,10 @@ from typing import cast
 import numpy as np
 from gymnasium import spaces
 
-from containerl import AllowedTypes, create_agent_server
-from containerl import CRLAgent as BaseAgent
+from containerl import AllowedTypes, CRLAgent, create_agent_server
 
 
-class Agent(BaseAgent[np.ndarray]):
+class Agent(CRLAgent):
     """A simple agent with dictionary observations and continuous action space."""
 
     def __init__(self) -> None:
@@ -27,7 +26,7 @@ class Agent(BaseAgent[np.ndarray]):
 
         self.action_space = spaces.Box(low=0.0, high=10.0, shape=(1,), dtype=np.float32)
 
-    def get_action(self, observation: dict[str, AllowedTypes]) -> np.ndarray:
+    def get_action(self, observation: dict[str, AllowedTypes]) -> AllowedTypes:
         """Return a random action based on the observation."""
         for key, space in cast(spaces.Dict, self.observation_space).spaces.items():
             if key not in observation:
@@ -40,5 +39,4 @@ class Agent(BaseAgent[np.ndarray]):
 
 
 if __name__ == "__main__":
-    agent = Agent()
-    create_agent_server(agent)
+    create_agent_server(Agent)

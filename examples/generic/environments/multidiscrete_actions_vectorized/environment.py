@@ -9,12 +9,12 @@ from numpy.typing import NDArray
 from containerl import (
     AllowedInfoValueTypes,
     AllowedTypes,
-    CRLVecEnvironment,
+    CRLVecGymEnvironment,
     create_vec_environment_server,
 )
 
 
-class Environment(CRLVecEnvironment[NDArray[np.integer[Any]]]):
+class Environment(CRLVecGymEnvironment):
     """A simple multidiscrete action vectorized environment with dictionary observations."""
 
     def __init__(self, num_envs: int = 1):
@@ -37,18 +37,17 @@ class Environment(CRLVecEnvironment[NDArray[np.integer[Any]]]):
         self.render_mode = "rgb_array"
 
     def reset(
-        self, seed: int | None = None, options: dict[str, Any] | None = None
+        self, *, seed: int | None = None, options: dict[str, Any] | None = None
     ) -> tuple[
         dict[str, NDArray[np.floating | np.integer[Any]]],
         list[dict[str, AllowedInfoValueTypes]],
     ]:
         """Reset the environment."""
-        super(type(self), self).reset(seed=seed)
         self.env_step = 0
         return self._get_observation(), self._get_info()
 
     def step(
-        self, action: NDArray[np.integer[Any]]
+        self, action: NDArray[np.floating | np.integer[Any]]
     ) -> tuple[
         dict[str, NDArray[np.floating | np.integer[Any]]],
         NDArray[np.floating],

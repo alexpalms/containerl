@@ -1,33 +1,36 @@
 """Client for connecting to a remote agent via gRPC."""
 
 import logging
+from typing import Any
 
 import grpc
 import msgpack
 from gymnasium import spaces
 
-from ..proto_pb2 import Empty, ObservationRequest
+from ..proto_pb2 import AgentInitRequest, ObservationRequest
 
 # Add the interface directory to the path to import the generated gRPC code
 from ..proto_pb2_grpc import AgentServiceStub
 from ..utils import (
+    AllowedInfoValueTypes,
     AllowedSerializableTypes,
     AllowedTypes,
     native_to_numpy,
     native_to_numpy_space,
     numpy_to_native,
 )
+from .server_factory import CRLAgent
 
 
-class AgentClient:
-    """
-    A Gym environment compatible agent that connects to a remote environment via gRPC.
+class AgentClient(CRLAgent):
+    """Client for connecting to a remote agent via gRPC."""
 
-    This class implements the Gym interface and forwards all calls to a remote
-    agent server.
-    """
-
-    def __init__(self, server_address: str, timeout: float = 60.0):
+    def __init__(
+        self,
+        server_address: str,
+        timeout: float = 60.0,
+        **init_args: dict[str, Any] | None,
+    ) -> None:
         # Connect to the gRPC server with timeout
         self.channel = grpc.insecure_channel(server_address)
         try:
@@ -42,19 +45,26 @@ class AgentClient:
         self.stub = AgentServiceStub(self.channel)
 
         # Initialize the remote environment
-        init_request = Empty()
+        init_request = AgentInitRequest()
+
+        if init_args:
+            init_request.init_args = msgpack.packb(init_args, use_bin_type=True)
 
         # Call the Init method and get space information
-        spaces_response = self.stub.GetSpaces(init_request)
+        agent_init_response = self.stub.Init(init_request)
 
         # Set up observation space
         space_dict = {}
-        for name, proto_space in spaces_response.observation_space.items():
+        for name, proto_space in agent_init_response.observation_space.items():
             space_dict[name] = native_to_numpy_space(proto_space)
         self.observation_space = spaces.Dict(space_dict)
 
         # Set up action space
-        self.action_space = native_to_numpy_space(spaces_response.action_space)
+        self.action_space = native_to_numpy_space(agent_init_response.action_space)
+
+        self.init_info: dict[str, AllowedInfoValueTypes] = msgpack.unpackb(
+            agent_init_response.info, raw=False
+        )
 
     def get_action(self, observation: dict[str, AllowedTypes]) -> AllowedTypes:
         """Get an action from the agent."""
@@ -96,7 +106,11 @@ class AgentClient:
         return action
 
 
-def main(server_address: str = "localhost:50051", num_steps: int = 5) -> None:
+def agent_check(
+    server_address: str = "localhost:50051",
+    num_steps: int = 5,
+    **init_args: dict[str, Any] | None,
+) -> None:
     """
     Run a simple test of the EnvironmentClient.
 
@@ -107,7 +121,11 @@ def main(server_address: str = "localhost:50051", num_steps: int = 5) -> None:
     logger = logging.getLogger(__name__)
     try:
         # Create a remote agent
-        agent = AgentClient(server_address)
+        agent = AgentClient(
+            server_address,
+            timeout=60.0,
+            **init_args,
+        )
 
         # Run a few steps
         for _ in range(num_steps):
@@ -128,30 +146,3 @@ def main(server_address: str = "localhost:50051", num_steps: int = 5) -> None:
         logger.info(f"\nError: {e}")
         logger.info("Failed to connect to or interact with the agent server.")
         raise
-
-
-# Example usage
-if __name__ == "__main__":
-    import argparse
-
-    parser = argparse.ArgumentParser(description="Test the AgentClient")
-    parser.add_argument(
-        "--address",
-        default="localhost:50051",
-        help="AServer address (default: localhost:50051)",
-    )
-    parser.add_argument(
-        "--steps",
-        type=int,
-        default=5,
-        help="Number of steps to run in the test (default: 5)",
-    )
-
-    args = parser.parse_args()
-
-    try:
-        main(args.address, args.steps)
-    except Exception:
-        import sys
-
-        sys.exit(1)

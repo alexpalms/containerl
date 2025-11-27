@@ -8,7 +8,7 @@ enum EnvironmentType {
 }
 
 service EnvironmentService {
-  rpc Init (InitRequest) returns (SpacesResponse) {}
+  rpc Init (EnvInitRequest) returns (EnvInitResponse) {}
   rpc Reset (ResetRequest) returns (ResetResponse) {}
   rpc Step (StepRequest) returns (StepResponse) {}
   rpc Render (Empty) returns (RenderResponse) {}
@@ -16,7 +16,7 @@ service EnvironmentService {
 }
 
 service AgentService {
-  rpc GetSpaces (Empty) returns (SpacesResponse) {}
+  rpc Init (AgentInitRequest) returns (AgentInitResponse) {}
   rpc GetAction (ObservationRequest) returns (ActionResponse) {}
 }
 
@@ -30,7 +30,11 @@ message ActionResponse {
   bytes action = 1;
 }
 
-message InitRequest {
+message AgentInitRequest {
+  optional bytes init_args = 1;
+}
+
+message EnvInitRequest {
   optional string render_mode = 1;
   optional bytes init_args = 2;
 }
@@ -71,10 +75,17 @@ message Space {
   string dtype = 7;
 }
 
-message SpacesResponse {
+message EnvInitResponse {
   map<string, Space> observation_space = 1;
   Space action_space = 2;
   int32 num_envs = 3;
   EnvironmentType environment_type = 4;
   string render_mode = 5;
+  bytes info = 6;
+}
+
+message AgentInitResponse {
+  map<string, Space> observation_space = 1;
+  Space action_space = 2;
+  bytes info = 3;
 }

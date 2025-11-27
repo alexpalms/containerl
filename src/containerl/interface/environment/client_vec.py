@@ -2,8 +2,7 @@
 
 import logging
 import sys
-from collections.abc import Mapping
-from typing import Any
+from typing import Any, cast
 
 import grpc
 import msgpack
@@ -14,8 +13,8 @@ from numpy.typing import NDArray
 # Add the interface directory to the path to import the generated gRPC code
 from ..proto_pb2 import (
     Empty,
+    EnvInitRequest,
     EnvironmentType,
-    InitRequest,
     ResetRequest,
     StepRequest,
 )
@@ -26,30 +25,19 @@ from ..utils import (
     AllowedTypes,
     native_to_numpy_space,
     native_to_numpy_vec,
-    numpy_to_native,
 )
+from .server_factory_vec import CRLVecGymEnvironment
 
 
-class VecEnvironmentClient:
-    """
-    A Gym environment that connects to a remote environment via gRPC.
-
-    This class implements the Gym interface and forwards all calls to a remote
-    environment server running the AnyLogic Stock Management environment.
-
-    Args:
-        server_address (str): The address of the gRPC server (e.g., "localhost:50051")
-        render_mode (str, optional): The render mode to use. Defaults to None.
-        timeout (float, optional): The timeout for connecting to the gRPC server. Defaults to 60.0 seconds.
-        init_args (dict, optional): Additional arguments to pass to the environment initialization.
-    """
+class CRLVecEnvironmentClient:
+    """A Gym environment that connects to a remote environment via gRPC."""
 
     def __init__(
         self,
         server_address: str,
         timeout: float = 60.0,
         render_mode: str | None = None,
-        **init_args: dict[str, Any],
+        **init_args: dict[str, Any] | None,
     ) -> None:
         # Connect to the gRPC server with timeout
         self.channel = grpc.insecure_channel(server_address)
@@ -65,7 +53,7 @@ class VecEnvironmentClient:
         self.stub = EnvironmentServiceStub(self.channel)
 
         # Initialize the remote environment
-        init_request = InitRequest()
+        init_request = EnvInitRequest()
         if render_mode is not None:
             init_request.render_mode = render_mode
 
@@ -73,21 +61,24 @@ class VecEnvironmentClient:
             init_request.init_args = msgpack.packb(init_args, use_bin_type=True)
 
         # Call the Init method and get space information
-        spaces_response = self.stub.Init(init_request)
+        env_init_response = self.stub.Init(init_request)
 
         # Set up observation space
         space_dict: dict[str, AllowedSpaces] = {}
-        for name, proto_space in spaces_response.observation_space.items():
+        for name, proto_space in env_init_response.observation_space.items():
             space_dict[name] = native_to_numpy_space(proto_space)
         self.observation_space = spaces.Dict(space_dict)
 
         # Set up action space
-        self.action_space = native_to_numpy_space(spaces_response.action_space)
+        self.action_space = cast(
+            spaces.Space[NDArray[np.floating | np.integer[Any]]],
+            native_to_numpy_space(env_init_response.action_space),
+        )
 
         # Set up number of environments
-        self.num_envs = spaces_response.num_envs
-        self.environment_type = spaces_response.environment_type
-        if spaces_response.environment_type != EnvironmentType.VECTORIZED:
+        self.num_envs = env_init_response.num_envs
+        self.environment_type = env_init_response.environment_type
+        if self.environment_type != EnvironmentType.VECTORIZED:
             raise Exception(
                 "VecEnvironmentClient only supports VECTORIZED environments. "
                 "For STANDARD environments, please use EnvironmentClient."
@@ -95,16 +86,21 @@ class VecEnvironmentClient:
 
         # Store render mode
         self.render_mode = (
-            spaces_response.render_mode
-            if spaces_response.render_mode != "None"
+            env_init_response.render_mode
+            if env_init_response.render_mode != "None"
             else None
+        )
+
+        # Store Environment intialization info if provided
+        self.init_info: dict[str, AllowedInfoValueTypes] = msgpack.unpackb(
+            env_init_response.info, raw=False
         )
 
     def reset(
         self, *, seed: int | None = None, options: dict[str, Any] | None = None
     ) -> tuple[
-        Mapping[str, NDArray[np.floating | np.integer[Any]]],
-        list[Mapping[str, AllowedInfoValueTypes]],
+        dict[str, NDArray[np.floating | np.integer[Any]]],
+        list[dict[str, AllowedInfoValueTypes]],
     ]:
         """Reset the environment and return the initial observation."""
         reset_request = ResetRequest()
@@ -119,10 +115,10 @@ class VecEnvironmentClient:
         reset_response = self.stub.Reset(reset_request)
 
         # Deserialize the observation and info
-        observation: Mapping[str, list[float | int]] = msgpack.unpackb(
+        observation: dict[str, list[float | int]] = msgpack.unpackb(
             reset_response.observation, raw=False
         )
-        info: list[Mapping[str, AllowedInfoValueTypes]] = msgpack.unpackb(
+        info: list[dict[str, AllowedInfoValueTypes]] = msgpack.unpackb(
             reset_response.info, raw=False
         )
 
@@ -134,18 +130,15 @@ class VecEnvironmentClient:
     def step(
         self, action: AllowedTypes
     ) -> tuple[
-        Mapping[str, NDArray[np.floating | np.integer[Any]]],
+        dict[str, NDArray[np.floating | np.integer[Any]]],
         NDArray[np.floating],
         NDArray[np.bool_],
         NDArray[np.bool_],
-        list[Mapping[str, AllowedInfoValueTypes]],
+        list[dict[str, AllowedInfoValueTypes]],
     ]:
         """Take a step in the environment."""
         # Convert NumPy arrays to lists for serialization
-        if self.environment_type == EnvironmentType.VECTORIZED:
-            native_action = action.tolist()
-        else:
-            native_action = numpy_to_native(action)
+        native_action = action.tolist()
 
         # Serialize the action
         serialized_action = msgpack.packb(native_action, use_bin_type=True)
@@ -157,13 +150,13 @@ class VecEnvironmentClient:
         step_response = self.stub.Step(step_request)
 
         # Deserialize the observation and info
-        observation: Mapping[str, list[float | int]] = msgpack.unpackb(
+        observation: dict[str, list[float | int]] = msgpack.unpackb(
             step_response.observation, raw=False
         )
         reward: list[float] = msgpack.unpackb(step_response.reward, raw=False)
         terminated: list[bool] = msgpack.unpackb(step_response.terminated, raw=False)
         truncated: list[bool] = msgpack.unpackb(step_response.truncated, raw=False)
-        info: list[Mapping[str, AllowedInfoValueTypes]] = msgpack.unpackb(
+        info: list[dict[str, AllowedInfoValueTypes]] = msgpack.unpackb(
             step_response.info, raw=False
         )
 
@@ -217,15 +210,67 @@ class VecEnvironmentClient:
         self.channel.close()
 
     def _get_numpy_observation(
-        self, observation: Mapping[str, list[float | int]]
-    ) -> Mapping[str, NDArray[np.floating | np.integer[Any]]]:
+        self, observation: dict[str, list[float | int]]
+    ) -> dict[str, NDArray[np.floating | np.integer[Any]]]:
         return {
             key: native_to_numpy_vec(value, self.observation_space[key], self.num_envs)
             for key, value in observation.items()
         }
 
 
-def main(server_address: str = "localhost:50051", num_steps: int = 5) -> None:
+class CRLVecGymEnvironmentAdapter(CRLVecGymEnvironment):
+    """Adapter to use CRLEnvironmentClient as a Gym environment."""
+
+    metadata = {"render_modes": ["rgb_array"], "render_fps": 30}
+
+    def __init__(
+        self,
+        server_address: str,
+        timeout: float = 60.0,
+        render_mode: str | None = None,
+        **init_args: Any,
+    ):
+        self.client = CRLVecEnvironmentClient(
+            server_address, timeout=timeout, render_mode=render_mode, **init_args
+        )
+        self.observation_space = self.client.observation_space
+        self.action_space = self.client.action_space
+        self.render_mode = self.client.render_mode
+        self.init_info = self.client.init_info
+
+    def reset(  # type: ignore
+        self, *, seed: int | None = None, options: dict[str, Any] | None = None
+    ) -> tuple[
+        dict[str, NDArray[np.floating | np.integer[Any]]],
+        list[dict[str, AllowedInfoValueTypes]],
+    ]:
+        """Reset the environment."""
+        return self.client.reset(seed=seed, options=options)
+
+    def step(  # type: ignore
+        self, action: AllowedTypes
+    ) -> tuple[
+        dict[str, NDArray[np.floating | np.integer[Any]]],
+        NDArray[np.floating],
+        NDArray[np.bool_],
+        NDArray[np.bool_],
+        list[dict[str, AllowedInfoValueTypes]],
+    ]:
+        """Take a step in the environment."""
+        return self.client.step(action)
+
+    def render(self) -> NDArray[np.uint8] | None:  # type: ignore
+        """Render the environment."""
+        return self.client.render()
+
+    def close(self) -> None:
+        """Close the environment."""
+        self.client.close()
+
+
+def vec_environment_check(
+    server_address: str = "localhost:50051", num_steps: int = 5
+) -> None:
     """
     Run a simple test of the EnvironmentClient.
 
@@ -242,7 +287,7 @@ def main(server_address: str = "localhost:50051", num_steps: int = 5) -> None:
 
     try:
         # Create a remote environment
-        env = VecEnvironmentClient(server_address)
+        env = CRLVecEnvironmentClient(server_address)
         # Reset the environment
         obs, info = env.reset()
         for key, value in obs.items():
@@ -295,11 +340,7 @@ def main(server_address: str = "localhost:50051", num_steps: int = 5) -> None:
             logger.info(f"Terminated: {terminated}")
             logger.info(f"Truncated: {truncated}")
 
-            if env.environment_type == EnvironmentType.VECTORIZED:
-                done = np.any(terminated) or np.any(truncated)
-            else:
-                done = terminated or truncated
-            if done:
+            if np.any(terminated) or np.any(truncated):
                 obs, info = env.reset()
 
         # Close the environment
@@ -312,28 +353,3 @@ def main(server_address: str = "localhost:50051", num_steps: int = 5) -> None:
         logger.info(f"\nError: {e}")
         logger.info("Failed to connect to or interact with the environment server.")
         raise
-
-
-# Example usage
-if __name__ == "__main__":
-    import argparse
-
-    parser = argparse.ArgumentParser(description="Test the EnvironmentClient")
-    parser.add_argument(
-        "--address",
-        default="localhost:50051",
-        help="Server address (default: localhost:50051)",
-    )
-    parser.add_argument(
-        "--steps",
-        type=int,
-        default=5,
-        help="Number of steps to run in the test (default: 5)",
-    )
-
-    args = parser.parse_args()
-
-    try:
-        main(args.address, args.steps)
-    except Exception:
-        sys.exit(1)

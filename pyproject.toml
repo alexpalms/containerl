@@ -16,7 +16,7 @@ description = "Add your description here"
 readme = { file = "README.md", content-type = "text/markdown"}
 license = { text = "MIT" }
 
-requires-python = ">=3.11"
+requires-python = ">=3.12"
 classifiers = [
     "Programming Language :: Python :: 3",
     "Operating System :: Linux",
@@ -38,6 +38,8 @@ dev = [
     "pytest-cov>=7.0.0",
     "ruff>=0.12.12",
     "twine>=6.2.0",
+    "types-grpcio>=1.0.0.20251009",
+    "types-protobuf>=6.32.1.20251105",
 ]
 
 docs = [
@@ -76,18 +78,24 @@ reportMissingImports = "error"
 reportMissingParameterType = "error"
 reportMissingTypeArgument = "error"
 reportUntypedFunctionDecorator = "error"
-reportUntypedFunctionCall = "error"
-reportMissingTypeStubs = "none"
+reportMissingTypeStubs = "error"
 extraPaths = ["stubs"]
+exclude = [
+  "src/containerl/interface/proto_pb2*.*",
+  "examples/anylogic/stock_management/environment/*",
+  "examples/anylogic/stock_management/agent/basic_ppo.py",
+]
 
 [tool.mypy]
 strict = true
-python_version = "3.11"
-files = ["src", "examples", "tests", "docs"]
+python_version = "3.12"
+files = ["src", "tests", "docs"]
+mypy_path = ["stubs"]
 
 [tool.ruff]
 line-length = 88
-target-version = "py311"
+target-version = "py312"
+exclude = ["src/containerl/interface/proto_pb2*.*"]
 
 [tool.ruff.lint]
 select = [

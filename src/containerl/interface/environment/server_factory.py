@@ -3,24 +3,22 @@
 # gRPC Server Implementation
 import logging
 import traceback
-from abc import abstractmethod
 from concurrent import futures
-from typing import Any, Generic, SupportsFloat
+from typing import Any, cast
 
 import grpc
-import gymnasium as gym
 import msgpack
 import numpy as np
-from numpy.typing import NDArray
+from gymnasium import Env, spaces
 
 from ..proto_pb2 import (
     Empty,
+    EnvInitRequest,
+    EnvInitResponse,
     EnvironmentType,
-    InitRequest,
     RenderResponse,
     ResetRequest,
     ResetResponse,
-    SpacesResponse,
     StepRequest,
     StepResponse,
 )
@@ -29,68 +27,34 @@ from ..proto_pb2_grpc import (
     add_EnvironmentServiceServicer_to_server,
 )
 from ..utils import (
-    AllowedInfoValueTypes,
     AllowedSerializableTypes,
     AllowedSpaces,
     AllowedTypes,
-    CRLActType,
     native_to_numpy,
     numpy_to_native,
     numpy_to_native_space,
 )
 
 
-class CRLEnvironment(gym.Env[dict[str, AllowedTypes], CRLActType]):
-    """Abstract base class for Environments."""
-
-    @abstractmethod
-    def reset(
-        self, *, seed: int | None = None, options: dict[str, Any] | None = None
-    ) -> tuple[
-        dict[str, AllowedTypes],
-        dict[str, AllowedInfoValueTypes],
-    ]:
-        """Reset the environment."""
-        pass
-
-    @abstractmethod
-    def step(
-        self, action: CRLActType
-    ) -> tuple[
-        dict[str, AllowedTypes],
-        SupportsFloat,
-        bool,
-        bool,
-        dict[str, AllowedInfoValueTypes],
-    ]:
-        """Take a step in the environment."""
-        pass
-
-    @abstractmethod
-    def render(self) -> NDArray[np.uint8] | None:
-        """Render the environment and return an image as a numpy array if applicable."""
-        pass
-
-
-class EnvironmentServicer(
+class EnvironmentServer(
     EnvironmentServiceServicer,
-    Generic[CRLActType],
 ):
     """gRPC servicer that wraps the GymEnvironment."""
 
     def __init__(
         self,
-        environment_class: type[CRLEnvironment[CRLActType]],
+        environment_class: type[Env[dict[str, AllowedTypes], AllowedTypes]],
     ) -> None:
-        self.env: CRLEnvironment[AllowedTypes] | None = None
+        self.logger = logging.getLogger("containerl.environment_server")
         self.environment_class = environment_class
+        self.env: Env[dict[str, AllowedTypes], AllowedTypes] | None = None
         self.environment_type: EnvironmentType = EnvironmentType.STANDARD
         self.num_envs: int = 1
         self.space_type_map: dict[str, AllowedSpaces] = {}
 
-    def Init(
-        self, request: InitRequest, context: grpc.ServicerContext
-    ) -> SpacesResponse:
+    def Init(  # noqa: N802 #  gRPC method names use UpperCamelCase
+        self, request: EnvInitRequest, context: grpc.ServicerContext
+    ) -> EnvInitResponse:
         """Initialize the environment and return space information."""
         try:
             # Prepare initialization arguments
@@ -106,10 +70,10 @@ class EnvironmentServicer(
             self.env = self.environment_class(**init_args)
 
             # Create response with space information
-            response = SpacesResponse()
+            response = EnvInitResponse()
 
             # Handle observation space (Dict space)
-            if not isinstance(self.env.observation_space, gym.spaces.Dict):
+            if not isinstance(self.env.observation_space, spaces.Dict):
                 raise Exception("Observation space must be a Dict")
 
             for space_name, space in self.env.observation_space.spaces.items():
@@ -118,19 +82,24 @@ class EnvironmentServicer(
                 numpy_to_native_space(space, space_proto)
 
             # Handle action space
-            action_space = self.env.action_space
-            if isinstance(action_space, gym.spaces.MultiBinary):
-                if len(action_space.shape) != 1:
+            if isinstance(self.env.action_space, spaces.MultiBinary):
+                if len(self.env.action_space.shape) != 1:
                     raise Exception(
                         "MultiBinary action space must be 1D, consider flattening it."
                     )
-            numpy_to_native_space(action_space, response.action_space)
-
+            numpy_to_native_space(self.env.action_space, response.action_space)
             response.num_envs = self.num_envs
             response.environment_type = self.environment_type
-            response.render_mode = (
-                self.env.render_mode if self.env.render_mode is not None else "None"
+            render_mode = self.env.render_mode
+            if render_mode is None:
+                render_mode = "None"
+            response.render_mode = render_mode
+
+            info = msgpack.packb(
+                self.env.init_info if hasattr(self.env, "init_info") else {},  # pyright: ignore
+                use_bin_type=True,
             )
+            response.info = info
 
             return response
         except Exception as e:
@@ -139,9 +108,9 @@ class EnvironmentServicer(
             context.set_details(
                 f"Error initializing environment: {str(e)}\nStacktrace: {stack_trace}"
             )
-            return SpacesResponse()
+            return EnvInitResponse()
 
-    def Reset(
+    def Reset(  # noqa: N802 #  gRPC method names use UpperCamelCase
         self,
         request: ResetRequest,
         context: grpc.ServicerContext,
@@ -183,7 +152,7 @@ class EnvironmentServicer(
             )
             return ResetResponse()
 
-    def Step(self, request: StepRequest, context: grpc.ServicerContext) -> StepResponse:
+    def Step(self, request: StepRequest, context: grpc.ServicerContext) -> StepResponse:  # noqa: N802 #  gRPC method names use UpperCamelCase
         """Take a step in the environment."""
         try:
             if self.env is None:
@@ -222,7 +191,7 @@ class EnvironmentServicer(
             )
             return StepResponse()
 
-    def Render(self, request: Empty, context: grpc.ServicerContext) -> RenderResponse:
+    def Render(self, request: Empty, context: grpc.ServicerContext) -> RenderResponse:  # noqa: N802 #  gRPC method names use UpperCamelCase
         """Render the environment."""
         try:
             if self.env is None:
@@ -231,20 +200,23 @@ class EnvironmentServicer(
                 return RenderResponse()
 
             # Get the render output directly
-            render_output = self.env.render()
+            render_output = cast(Any, self.env.render())
 
             # If it's a numpy array, directly serialize it
-            if isinstance(render_output, np.ndarray):
+            if isinstance(render_output, np.ndarray) and render_output.ndim == 3:
                 # Create a dict with array metadata and data for proper reconstruction
-                array_data = {
-                    "shape": render_output.shape,
-                    "dtype": str(render_output.dtype),
+                array_data: dict[str, tuple[int, ...] | str | bytes] = {
+                    "shape": render_output.shape,  # pyright: ignore[reportUnknownMemberType]
+                    "dtype": str(render_output.dtype),  # pyright: ignore
                     "data": render_output.tobytes(),
                 }
                 render_data = msgpack.packb(array_data, use_bin_type=True)
                 return RenderResponse(render_data=render_data)
             else:
                 # For non-array outputs, return empty data
+                self.logger.warning(
+                    "Render output is not an image, i.e. 3D, np.int8 numpy array; returning empty render data."
+                )
                 return RenderResponse(render_data=b"")
         except Exception as e:
             stack_trace = traceback.format_exc()
@@ -254,11 +226,11 @@ class EnvironmentServicer(
             )
             return RenderResponse()
 
-    def Close(self, request: Empty, context: grpc.ServicerContext) -> Empty:
+    def Close(self, request: Empty, context: grpc.ServicerContext) -> Empty:  # noqa: N802 #  gRPC method names use UpperCamelCase
         """Close the environment."""
         try:
             if self.env is not None:
-                self.env.close()
+                self.env.close()  # type: ignore
                 self.env = None
             return Empty()
         except Exception as e:
@@ -276,12 +248,12 @@ class EnvironmentServicer(
 
 
 def create_environment_server(
-    environment_class: type[CRLEnvironment[CRLActType]],
+    environment_class: type[Env[dict[str, AllowedTypes], AllowedTypes]],
     port: int = 50051,
 ) -> None:
     """Start the gRPC server."""
     logger = logging.getLogger("containerl.environment_server")
-    environment_server = EnvironmentServicer(environment_class)
+    environment_server = EnvironmentServer(environment_class)
     server = grpc.server(futures.ThreadPoolExecutor(max_workers=10))
     add_EnvironmentServiceServicer_to_server(environment_server, server)
     server.add_insecure_port(f"[::]:{port}")

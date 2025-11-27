@@ -1,19 +1,19 @@
 """Simple DeepRL Agent for Anylogic stock problem."""
 
 import os
+from typing import Any
 
 import numpy as np
 from gymnasium import spaces
 from stable_baselines3 import PPO
 
-from containerl import AllowedTypes, create_agent_server
-from containerl import CRLAgent as BaseAgent
+from containerl import AllowedTypes, CRLAgent, create_agent_server
 
 
-class Agent(BaseAgent[np.ndarray]):
+class Agent(CRLAgent):
     """Simple DeepRL Agent for Anylogic stock problem."""
 
-    def __init__(self) -> None:
+    def __init__(self, model_name: str, device: str) -> None:
         self.observation_space = spaces.Dict(
             {
                 "stock": spaces.Box(
@@ -27,13 +27,15 @@ class Agent(BaseAgent[np.ndarray]):
 
         self.action_space = spaces.Box(0, 50, shape=(1,), dtype=np.float32)
 
-        model_path = os.path.join(os.path.dirname(__file__), "model.zip")
+        model_path = os.path.join(os.path.dirname(__file__), model_name)
         if not os.path.exists(model_path):
             raise FileNotFoundError("Model file not found at {model_path}")
 
-        self.agent = PPO.load(model_path, device="cpu")
+        self.agent = PPO.load(model_path, device=device)
 
-    def get_action(self, observation: dict[str, AllowedTypes]) -> np.ndarray:
+        self.init_info: dict[str, Any] = {"model_name": model_name, "device": device}
+
+    def get_action(self, observation: dict[str, AllowedTypes]) -> AllowedTypes:
         """Return the optimal action as calculated by the deepRL model."""
         obs = {
             "stock": np.array(observation["stock"]) / 5000.0 - 1,
@@ -46,5 +48,4 @@ class Agent(BaseAgent[np.ndarray]):
 
 
 if __name__ == "__main__":
-    agent = Agent()
-    create_agent_server(agent)
+    create_agent_server(Agent)

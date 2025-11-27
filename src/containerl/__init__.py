@@ -1,35 +1,38 @@
 __version__ = "0.1.0"
 from . import cli
-from .interface.agent.client import AgentClient
-from .interface.agent.client import main as validate_agent_connection
+from .interface.agent.client import AgentClient, agent_check
 from .interface.agent.server_factory import CRLAgent, create_agent_server
-from .interface.environment.client import EnvironmentClient
 from .interface.environment.client import (
-    main as validate_environment_connection,
+    CRLEnvironmentClient,
+    CRLGymEnvironmentAdapter,
+    environment_check,
+    gym_environment_check,
 )
-from .interface.environment.client_vec import VecEnvironmentClient
 from .interface.environment.client_vec import (
-    main as validate_vec_environment_connection,
+    CRLVecEnvironmentClient,
+    CRLVecGymEnvironmentAdapter,
+    vec_environment_check,
 )
 from .interface.environment.server_factory import (
-    CRLEnvironment,
     create_environment_server,
 )
 from .interface.environment.server_factory_vec import (
-    CRLVecEnvironment,
+    CRLVecGymEnvironment,
     create_vec_environment_server,
 )
 from .interface.proto_pb2 import (
     ActionResponse,
+    AgentInitRequest,
+    AgentInitResponse,
     Empty,
+    EnvInitRequest,
+    EnvInitResponse,
     EnvironmentType,
-    InitRequest,
     ObservationRequest,
     RenderResponse,
     ResetRequest,
     ResetResponse,
     Space,
-    SpacesResponse,
     StepRequest,
     StepResponse,
 )
@@ -48,7 +51,6 @@ from .interface.utils import (
     AllowedSerializableTypes,
     AllowedSpaces,
     AllowedTypes,
-    CRLActType,
     native_to_numpy,
     native_to_numpy_space,
     native_to_numpy_vec,
@@ -58,21 +60,23 @@ from .interface.utils import (
 )
 
 __all__ = [
-    "EnvironmentClient",
-    "VecEnvironmentClient",
-    "validate_vec_environment_connection",
-    "validate_environment_connection",
+    "CRLEnvironmentClient",
+    "vec_environment_check",
+    "environment_check",
+    "gym_environment_check",
     "AgentClient",
-    "validate_agent_connection",
+    "agent_check",
     "EnvironmentService",
+    "EnvInitRequest",
+    "EnvInitResponse",
     "AgentService",
     "EnvironmentServiceStub",
     "AgentServiceStub",
-    "InitRequest",
+    "AgentInitRequest",
     "ResetRequest",
     "StepRequest",
     "RenderResponse",
-    "SpacesResponse",
+    "AgentInitResponse",
     "Empty",
     "ResetResponse",
     "StepResponse",
@@ -80,9 +84,7 @@ __all__ = [
     "ActionResponse",
     "create_environment_server",
     "create_vec_environment_server",
-    "CRLVecEnvironment",
     "add_EnvironmentServiceServicer_to_server",
-    "CRLEnvironment",
     "create_agent_server",
     "add_AgentServiceServicer_to_server",
     "EnvironmentType",
@@ -97,8 +99,11 @@ __all__ = [
     "AllowedSpaces",
     "AllowedTypes",
     "AllowedInfoValueTypes",
-    "CRLActType",
     "process_info",
     "AllowedSerializableTypes",
     "CRLAgent",
+    "CRLVecGymEnvironment",
+    "CRLVecEnvironmentClient",
+    "CRLVecGymEnvironmentAdapter",
+    "CRLGymEnvironmentAdapter",
 ]
