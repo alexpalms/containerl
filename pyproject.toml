@@ -99,7 +99,7 @@ exclude = ["src/containerl/interface/proto_pb2*.*"]
 
 [tool.ruff.lint]
 select = [
-  "D", "E", "F", "UP", "I", "B", "N", "S", "A", "C4", "T20"
+  "E", "F", "UP", "I", "B", "N", "S", "A", "C4", "T20"
 ]
 ignore = ["E501", "D107"]
 
@@ -108,6 +108,7 @@ convention = "numpy"
 
 [tool.ruff.lint.per-file-ignores]
 "src/**/__init__.py" = ["D104", "D107"]  # ignore module and __init__ docstrings
+"tests/**" = ["S101"]  # allow asserts in tests
 
 [tool.ruff.format]
 quote-style = "double"

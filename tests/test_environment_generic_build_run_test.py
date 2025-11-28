@@ -64,7 +64,7 @@ TEST_CASES = [
 def test_build_run_environment(env_folder: str) -> None:
     """Test building, running, and validating a generic environment build."""
     # Run the build_run_test command
-    image = build_run(env_folder)
+    image, _ = build_run(env_folder)
     logger = logging.getLogger(__name__)
 
     success = False
@@ -78,6 +78,7 @@ def test_build_run_environment(env_folder: str) -> None:
     except Exception as e:
         logger.error(f"Error testing environment connection: {str(e)}")
 
+    # Ensure container is stopped using the image identifier
     stop_container(image)
 
     assert success, "Environment connection failed"  # noqa: S101

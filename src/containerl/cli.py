@@ -143,19 +143,12 @@ def run_docker_container(
     host_port: int = 50051,
     volumes: list[str] | None = None,
     entrypoint_args: list[str] | None = None,
-) -> None:
+    count: int = 1,
+) -> list[str]:
     """
-    Run a Docker container with the specified image.
+    Run one or more Docker containers with the specified image and return host addresses.
 
-    Args:
-        image: The image ID or name to run
-        port_mapping: Whether to map port 50051 to the host
-        interactive_bash: Whether to run in interactive mode with bash shell
-        additional_args: Additional arguments to pass to docker run
-        attach: Whether to attach to the container's STDOUT (default is detached mode)
-        host_port: The port on the host to map to container's port 50051 (default: 50051)
-        volumes: List of volume mappings in format "host_path:container_path"
-        entrypoint_args: List of arguments to pass to the container's entrypoint
+    Returns a list of addresses (e.g. ['localhost:50051', ...]) for the started containers.
     """
     logger = logging.getLogger(__name__)
 
@@ -167,88 +160,98 @@ def run_docker_container(
     if not is_valid_docker_image_name(image):
         raise ValueError(f"Invalid Docker image name: {image}")
 
-    cmd = [docker_path, "run", "--rm"]
+    addresses: list[str] = []
 
-    # Add -it for interactive mode
-    if interactive_bash:
-        cmd.append("-it")
-        # Override entrypoint for interactive mode to ensure we get a shell
-        cmd.extend(["--entrypoint", "bash"])
-    elif attach:
-        # For non-interactive but attached mode, we want to attach to STDOUT
-        cmd.extend(["-a", "STDOUT"])
-    else:
-        # For detached mode (default)
-        cmd.append("-d")
+    # Start 'count' containers sequentially, mapping incremental host ports if needed
+    for i in range(count):
+        cmd = [docker_path, "run", "--rm"]
 
-    # Add port mapping if enabled
-    if port_mapping:
-        cmd.extend(["-p", f"{host_port}:50051"])
-
-    # Add volume mappings if provided
-    if volumes:
-        for volume in volumes:
-            cmd.extend(["-v", volume])
-
-    if additional_args:
-        cmd.extend(additional_args)
-
-    cmd.append(image)
-
-    # Add entrypoint arguments if provided
-    if entrypoint_args:
-        cmd.extend(entrypoint_args)
-
-    try:
+        # Add -it for interactive mode
         if interactive_bash:
-            # For interactive mode, we use subprocess.call to directly connect
-            # the terminal to the container
-            logger.info(
-                f"Starting interactive bash session in container from image: {image}"
-            )
-            subprocess.call(cmd)  # noqa: S603
+            cmd.append("-it")
+            # Override entrypoint for interactive mode to ensure we get a shell
+            cmd.extend(["--entrypoint", "bash"])
         elif attach:
-            # Using subprocess.Popen with stdout/stderr streaming to console
-            process = subprocess.Popen(  # noqa: S603
-                cmd,
-                stdout=subprocess.PIPE,
-                stderr=subprocess.STDOUT,
-                universal_newlines=True,
-                bufsize=1,
-            )
-
-            logger.info(f"Running container from image: {image}")
-            logger.info(f"Command: {' '.join(cmd)}")
-            logger.info("Container logs:")
-
-            if process.stdout is None:
-                raise RuntimeError("Failed to capture Docker container output")
-
-            # Stream the output
-            for line in process.stdout:
-                logger.info(line)
-
-            process.wait()
-            if process.returncode != 0:
-                logger.error(f"Container exited with code {process.returncode}")
-                sys.exit(process.returncode)
+            # For non-interactive but attached mode, we want to attach to STDOUT
+            cmd.extend(["-a", "STDOUT"])
         else:
-            # Detached mode
-            logger.info(f"Starting container in detached mode from image: {image}")
-            logger.info(f"Command: {' '.join(cmd)}")
-            result = subprocess.run(cmd, check=False, capture_output=True, text=True)  # noqa: S603
-            if result.returncode != 0:
-                logger.error(f"Error starting container: {result.stderr}")
-                logger.error(f"Error: {result.stderr}")
-                sys.exit(1)
-            logger.info("Container started successfully")
+            # For detached mode (default)
+            cmd.append("-d")
 
-    except KeyboardInterrupt:
-        logger.info("\nStopping container...")
-        sys.exit(0)
-    except Exception as e:
-        logger.error(f"Error running Docker container: {str(e)}")
-        sys.exit(1)
+        # Add port mapping if enabled. If count > 1, increment host port for each.
+        effective_host_port = host_port + i if port_mapping and count > 1 else host_port
+        if port_mapping:
+            cmd.extend(["-p", f"{effective_host_port}:50051"])
+
+        # Add volume mappings if provided
+        if volumes:
+            for volume in volumes:
+                cmd.extend(["-v", volume])
+
+        if additional_args:
+            cmd.extend(additional_args)
+
+        cmd.append(image)
+
+        # Add entrypoint arguments if provided
+        if entrypoint_args:
+            cmd.extend(entrypoint_args)
+
+        try:
+            if interactive_bash:
+                # For interactive mode, we use subprocess.call to directly connect
+                # the terminal to the container
+                logger.info(
+                    f"Starting interactive bash session in container from image: {image}"
+                )
+                subprocess.call(cmd)  # noqa: S603
+            elif attach:
+                # Using subprocess.Popen with stdout/stderr streaming to console
+                process = subprocess.Popen(  # noqa: S603
+                    cmd,
+                    stdout=subprocess.PIPE,
+                    stderr=subprocess.STDOUT,
+                    universal_newlines=True,
+                    bufsize=1,
+                )
+
+                logger.info(f"Running container from image: {image}")
+                logger.info(f"Command: {' '.join(cmd)}")
+                logger.info("Container logs:")
+
+                if process.stdout is None:
+                    raise RuntimeError("Failed to capture Docker container output")
+
+                # Stream the output
+                for line in process.stdout:
+                    logger.info(line)
+
+                process.wait()
+                if process.returncode != 0:
+                    logger.error(f"Container exited with code {process.returncode}")
+                    sys.exit(process.returncode)
+            else:
+                # Detached mode
+                logger.info(f"Starting container in detached mode from image: {image}")
+                logger.info(f"Command: {' '.join(cmd)}")
+                result = subprocess.run(cmd, check=False, capture_output=True, text=True)  # noqa: S603
+                if result.returncode != 0:
+                    logger.error(f"Error starting container: {result.stderr}")
+                    logger.error(f"Error: {result.stderr}")
+                    sys.exit(1)
+                logger.info("Container started successfully")
+
+                # record the address for this instance
+                addresses.append(f"localhost:{effective_host_port}")
+
+        except KeyboardInterrupt:
+            logger.info("\nStopping container...")
+            sys.exit(0)
+        except Exception as e:
+            logger.error(f"Error running Docker container: {str(e)}")
+            sys.exit(1)
+
+    return addresses
 
 
 def test_connection(
@@ -310,16 +313,13 @@ def stop_container(image: str) -> None:
             sys.exit(1)
 
         # Get all container IDs running the specified image
-        container_ids = (
-            subprocess.run(  # noqa: S603
-                [docker_path, "ps", "-q", "--filter", f"ancestor={image}"],
-                capture_output=True,
-                text=True,
-                check=True,
-            )
-            .stdout.strip()
-            .split("\n")
+        result = subprocess.run(  # noqa: S603
+            [docker_path, "ps", "-q", "--filter", f"ancestor={image}"],
+            capture_output=True,
+            text=True,
+            check=True,
         )
+        container_ids = result.stdout.strip().split("\n")
 
         # Filter out empty strings
         container_ids = [cid for cid in container_ids if cid]
@@ -331,10 +331,12 @@ def stop_container(image: str) -> None:
         logger.info(f"Found {len(container_ids)} container(s) running image {image}")
         for container_id in container_ids:
             try:
+                # Prefer stopping then removing to allow graceful shutdown
+                subprocess.run([docker_path, "stop", container_id], check=False)  # noqa: S603
                 subprocess.run([docker_path, "rm", "-f", container_id], check=True)  # noqa: S603
-                logger.info(f"Container {container_id} stopped successfully")
+                logger.info(f"Container {container_id} stopped and removed successfully")
             except subprocess.CalledProcessError as e:
-                logger.error(f"Failed to stop container {container_id}: {e}")
+                logger.error(f"Failed to stop/remove container {container_id}: {e}")
 
     except Exception as e:
         logger.error(f"Error stopping containers: {str(e)}")
@@ -351,7 +353,14 @@ def build_run(
     host_port: int = 50051,
     volumes: list[str] | None = None,
     entrypoint_args: list[str] | None = None,
-) -> str:
+    count: int = 1,
+    agent_mode: bool = False,
+) -> tuple[str, list[str]]:
+    """
+    Build a Docker image, run it as one or more containers, and return image and addresses.
+
+    Returns (image, [addresses...])
+    """
     """
     Build a Docker image, run it as a container, and test the connection.
 
@@ -373,9 +382,9 @@ def build_run(
         logger.info("=== STEP 1: Building Docker Image ===")
         image = build_docker_image(path, name, tag, verbose, context)
 
-        # Step 2: Run the Docker container
-        logger.info("\n=== STEP 2: Running Docker Container ===")
-        run_docker_container(
+        # Step 2: Run the Docker container(s)
+        logger.info("\n=== STEP 2: Running Docker Container(s) ===")
+        addresses = run_docker_container(
             image,
             port_mapping,
             False,
@@ -384,13 +393,22 @@ def build_run(
             host_port=host_port,
             volumes=volumes,
             entrypoint_args=entrypoint_args,
+            count=count,
         )
 
-        # Give the container a moment to start up
-        logger.info("Waiting for container to initialize...")
-        time.sleep(3)  # Wait 3 seconds for the container to start
+        # Give the containers a moment to start up
+        logger.info("Waiting for containers to initialize...")
+        time.sleep(3)  # Wait 3 seconds for the containers to start
 
-        return image
+        # Print environment variable exports for addresses
+        if addresses:
+            # If agent_mode True, use CONTAINERL_AGENT_ADDRESSES, else CONTAINERL_ENV_ADDRESSES
+            env_var = "CONTAINERL_AGENT_ADDRESSES" if agent_mode else "CONTAINERL_ENV_ADDRESSES"
+            joined = ",".join(addresses)
+            logger.info("\nYou can export the addresses of the started containers with:")
+            logger.info(f"export {env_var}='{joined}'")
+
+        return image, addresses
 
     except Exception as e:
         logger.error(f"Error during build-run-test sequence: {str(e)}")
@@ -410,6 +428,7 @@ def build_run_test(
     volumes: list[str] | None = None,
     entrypoint_args: list[str] | None = None,
     agent_mode: bool = False,
+    count: int = 1,
 ) -> None:
     """
     Build a Docker image, run it as a container, and test the connection.
@@ -436,7 +455,7 @@ def build_run_test(
             logger.error("Docker executable not found in PATH. Please install Docker.")
             sys.exit(1)
 
-        image = build_run(
+        image, addresses = build_run(
             path,
             name,
             tag,
@@ -446,29 +465,38 @@ def build_run_test(
             host_port,
             volumes,
             entrypoint_args,
+            count=count,
+            agent_mode=agent_mode,
         )
 
-        # Step 3: Test the connection
+        # Step 3: Test the connection (test only first address if multiple)
         logger.info("\n=== STEP 3: Testing Connection ===")
 
-        # Test the connection
-        test_connection(server_address, num_steps, agent_mode)
+        if addresses:
+            test_address = addresses[0]
+        else:
+            test_address = server_address
 
-        # Stop the container after testing
-        logger.info("\n=== Cleaning up: Stopping container ===")
+        # Test the connection
+        test_connection(test_address, num_steps, agent_mode)
+
+        # Stop the containers after testing
+        logger.info("\n=== Cleaning up: Stopping container(s) ===")
         try:
-            container_id = subprocess.run(  # noqa: S603
+            container_ids = subprocess.run(  # noqa: S603
                 [docker_path, "ps", "-q", "--filter", f"ancestor={image}"],
                 capture_output=True,
                 text=True,
                 check=True,
-            ).stdout.strip()
+            ).stdout.strip().split("\n")
 
-            if container_id:
-                subprocess.run([docker_path, "stop", container_id], check=True)  # noqa: S603
+            container_ids = [cid for cid in container_ids if cid]
+
+            for container_id in container_ids:
+                subprocess.run([docker_path, "stop", container_id], check=False)  # noqa: S603
                 logger.info(f"Container {container_id} stopped successfully")
         except subprocess.CalledProcessError as e:
-            logger.error(f"Warning: Failed to stop container: {e}")
+            logger.error(f"Warning: Failed to stop container(s): {e}")
 
     except Exception as e:
         logger.error(f"Error during build-run-test sequence: {str(e)}")
@@ -562,6 +590,12 @@ def main() -> None:
         help="Port on the host to map to container's port 50051 (default: 50051)",
     )
     run_parser.add_argument(
+        "--count",
+        type=int,
+        default=1,
+        help="Number of containers to start from the same image (default: 1)",
+    )
+    run_parser.add_argument(
         "-i",
         "--interactive",
         action="store_true",
@@ -638,6 +672,17 @@ def main() -> None:
         help="Port on the host to map to container's port 50051 (default: 50051)",
     )
     br_parser.add_argument(
+        "--count",
+        type=int,
+        default=1,
+        help="Number of containers to start from the same image (default: 1)",
+    )
+    br_parser.add_argument(
+        "--agent",
+        action="store_true",
+        help="Mark the started containers as agents (sets CONTAINERL_AGENT_ADDRESSES when printing exports)",
+    )
+    br_parser.add_argument(
         "-v", "--verbose", action="store_true", help="Show detailed logs"
     )
     br_parser.add_argument(
@@ -686,6 +731,12 @@ def main() -> None:
         type=int,
         default=5,
         help="Number of steps to run in the test (default: 5)",
+    )
+    brt_parser.add_argument(
+        "--count",
+        type=int,
+        default=1,
+        help="Number of containers to start from the same image (default: 1)",
     )
     brt_parser.add_argument(
         "-v", "--verbose", action="store_true", help="Show detailed logs"
@@ -737,6 +788,7 @@ def main() -> None:
             host_port=args.host_port,
             volumes=args.volumes,
             entrypoint_args=args.entrypoint_args,
+            count=args.count,
         )
     elif args.command == "test":
         test_connection(args.address, args.steps, args.agent)
@@ -753,6 +805,8 @@ def main() -> None:
             args.host_port,
             args.volumes,
             args.entrypoint_args,
+            count=args.count,
+            agent_mode=args.agent if hasattr(args, 'agent') else False,
         )
     elif args.command == "build-run-test":
         build_run_test(
@@ -768,6 +822,7 @@ def main() -> None:
             args.volumes,
             args.entrypoint_args,
             args.agent,
+            count=args.count if hasattr(args, 'count') else 1,
         )
     elif args.command == "remove-images":
         remove_containerl_images()

@@ -79,7 +79,7 @@ TEST_CASES = [
 def test_build_run_agent(env_folder: str, env_param: dict[str, Any]) -> None:
     """Test building, running, and validating a generic agent environment."""
     logger = logging.getLogger(__name__)
-    image = build_run(env_folder)
+    image, _ = build_run(env_folder)
 
     success = False
     try:

@@ -81,6 +81,7 @@ def test_build_run_environment(env_folder: str, env_param: dict[str, Any]) -> No
     except Exception as e:
         logger.error(f"Error testing environment connection: {str(e)}")
 
-    stop_container(image)
+    # Ensure container is stopped using the image identifier
+    stop_container(str(image))
 
     assert success, "Environment connection failed"  # noqa: S101
