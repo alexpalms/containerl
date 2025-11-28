@@ -8,6 +8,8 @@ import pytest
 from containerl import agent_check
 from containerl.cli import build_run, stop_container
 
+pytestmark = pytest.mark.integration
+
 # Test cases with descriptive IDs
 TEST_CASES = [
     pytest.param(

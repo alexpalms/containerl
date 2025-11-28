@@ -11,6 +11,8 @@ from containerl import (
 )
 from containerl.cli import build_run, stop_container
 
+pytestmark = pytest.mark.integration
+
 # Define environments and their build configurations
 TEST_CASES = [
     # pytest.param(

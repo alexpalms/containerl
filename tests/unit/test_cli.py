@@ -10,7 +10,11 @@ from collections.abc import Iterable, Iterator
 from types import SimpleNamespace
 from typing import Any
 
+import pytest
+
 import containerl.cli as cli
+
+pytestmark = pytest.mark.unit
 
 
 def test_is_valid_docker_image_name() -> None:

@@ -12,6 +12,8 @@ import pytest
 from containerl.interface.agent import client as client_mod
 from containerl.interface.agent import server_factory as sf_mod
 
+pytestmark = pytest.mark.unit
+
 
 class DummyContext:
     def __init__(self) -> None:

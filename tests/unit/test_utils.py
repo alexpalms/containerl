@@ -8,6 +8,8 @@ from gymnasium import spaces
 
 from containerl.interface import proto_pb2, utils
 
+pytestmark = pytest.mark.unit
+
 
 def test_numpy_to_native_space_and_back_box() -> None:
     space = spaces.Box(

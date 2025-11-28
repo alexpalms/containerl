@@ -48,27 +48,39 @@ Show help and global options:
 containerl-cli --help
 ```
 
-Common usage patterns (commands are illustrative; run `--help` for exact options):
+Common, supported commands (see `--help` for full options):
 
-- Build a containerized environment or agent:
-
-```bash
-containerl-cli build --target env --path examples/cartpole
-```
-
-- Run an environment with a local agent:
+- Build a Docker image from a directory containing a Dockerfile:
 
 ```bash
-containerl-cli run --env CartPole-v1 --agent ./agents/ppo
+containerl-cli build ./examples/cartpole -n my-image -t v1
 ```
 
-- List available examples or registered environments:
+- Run a built image (maps container port 50051 to host by default):
 
 ```bash
-containerl-cli list --examples
+containerl-cli run my-image:v1 --host-port 50051 --count 1
 ```
 
-The CLI is intentionally thin: prefer `--help` for the canonical flags and subcommands implemented in `containerl.cli`.
+- Build an image and run containers from it:
+
+```bash
+containerl-cli build-run ./examples/cartpole
+```
+
+- Build, run and test a container (invokes client checks):
+
+```bash
+containerl-cli build-run-test ./examples/cartpole --address localhost:50051 --steps 5
+```
+
+- Stop all containers started from a given image:
+
+```bash
+containerl-cli stop my-image:v1
+```
+
+The CLI subcommands implemented are: `build`, `run`, `test`, `stop`, `build-run`, `build-run-test`, and `remove-images`. Use `containerl-cli <command> --help` for command-specific flags.
 
 
 ## Configuration and Extensibility
