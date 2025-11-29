@@ -87,24 +87,6 @@ class AgentClient(CRLAgent):
 
         return numpy_action
 
-    def get_action_serve(
-        self, observation: dict[str, AllowedTypes]
-    ) -> AllowedSerializableTypes:
-        """Get an action from the agent."""
-        # Convert numpy arrays to lists for serialization
-        observation_request = ObservationRequest(
-            observation=msgpack.packb(observation, use_bin_type=True)
-        )
-
-        # Call the GetAction method
-        action_response = self.stub.GetAction(observation_request)
-
-        # Deserialize the action
-        action: AllowedSerializableTypes = msgpack.unpackb(
-            action_response.action, raw=False
-        )
-        return action
-
 
 def agent_check(
     server_address: str = "localhost:50051",

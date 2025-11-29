@@ -114,3 +114,20 @@ convention = "numpy"
 quote-style = "double"
 indent-style = "space"
 line-ending = "lf"
+
+[tool.coverage.run]
+source = ["src"]
+omit = [
+  "src/containerl/interface/proto_pb2.py",
+  "src/containerl/interface/proto_pb2_grpc.py",
+]
+
+[tool.coverage.report]
+exclude_lines = [
+  "pragma: no cover",
+  "def __repr__",
+  "raise AssertionError",
+  "raise NotImplementedError",
+  "if __name__ == .__main__.:",
+  "if TYPE_CHECKING:",
+]
