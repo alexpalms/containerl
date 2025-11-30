@@ -1,12 +1,16 @@
 """Unit tests for containerl.interface.utils."""
 
+# from typing import Any, cast
+
 from typing import Any, cast
 
 import numpy as np
 import pytest
 from gymnasium import spaces
+from numpy.typing import NDArray
 
 from containerl.interface import proto_pb2, utils
+from containerl.interface.utils import AllowedInfoBaseTypes
 
 pytestmark = pytest.mark.unit
 
@@ -108,12 +112,18 @@ def test_native_to_numpy_vec_unsupported_raises() -> None:
 
 
 def test_process_info_conversions() -> None:
-    info = {
+    info: dict[
+        str,
+        NDArray[np.floating | np.integer[Any]]
+        | np.floating
+        | np.integer[Any]
+        | np.bool_
+        | list[AllowedInfoBaseTypes],
+    ] = {
         "arr": np.array([1, 2]),
         "num": np.int32(5),
         "b": np.bool_(True),
-        "lst": [np.int64(2), np.float32(3.1), np.bool_(False), np.array([1, 2])],
-        "tup": (np.int64(4),),
+        "lst": [2, "test", 3.1, False],
     }
 
     processed = utils.process_info(info.copy())
@@ -123,9 +133,7 @@ def test_process_info_conversions() -> None:
     # Compare elements individually to avoid float representation issues
     import math
 
-    lst = cast(list[Any], processed["lst"])  # tell mypy this is a list
+    lst: list[AllowedInfoBaseTypes] = cast(list[AllowedInfoBaseTypes], processed["lst"])
     assert lst[0] == 2
-    assert math.isclose(float(lst[1]), 3.1, rel_tol=1e-6)
-    assert lst[2] is False
-    assert lst[3] == [1, 2]
-    assert cast(list[Any], processed["tup"]) == [4]
+    assert math.isclose(float(lst[2]), 3.1, rel_tol=1e-6)
+    assert lst[3] is False

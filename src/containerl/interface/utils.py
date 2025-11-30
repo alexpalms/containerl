@@ -1,6 +1,6 @@
 """Utility functions for converting between Gymnasium spaces and protobuf representations."""
 
-from typing import Any, cast
+from typing import Any
 
 import numpy as np
 from gymnasium import spaces
@@ -131,29 +131,26 @@ def native_to_numpy_vec(
         raise ValueError(f"Unsupported space type: {type(space)}")
 
 
-def process_info(info: dict[str, Any]) -> dict[str, AllowedInfoValueTypes]:
+def process_info(
+    info: dict[
+        str,
+        NDArray[np.floating | np.integer[Any]]
+        | np.floating
+        | np.integer[Any]
+        | np.bool_
+        | list[AllowedInfoBaseTypes],
+    ],
+) -> dict[str, AllowedInfoValueTypes]:
     """Process the info dictionary to convert numpy types to native Python types."""
+    processed_info: dict[str, AllowedInfoValueTypes] = {}
     for key, value in info.items():
         if isinstance(value, np.ndarray):
-            info[key] = value.tolist()
+            processed_info[key] = value.tolist()
         elif isinstance(value, np.number):  # Catches all numeric types (int, float)
-            info[key] = value.item()  # .item() converts to native Python type
+            processed_info[key] = value.item()  # .item() converts to native Python type
         elif isinstance(value, np.bool_):
-            info[key] = bool(cast(bool, value))
-        elif isinstance(value, (list, tuple)):
-            value = cast(list[AllowedInfoBaseTypes], value)
-            # Process lists and tuples that might contain numpy types
-            processed: list[AllowedInfoValueTypes] = []
-            for item in value:
-                if isinstance(item, np.ndarray):
-                    processed.append(item.tolist())
-                elif isinstance(item, np.integer) or isinstance(item, np.floating):
-                    processed.append(item.item())
-                elif isinstance(item, np.bool_):
-                    processed.append(bool(item))
-                else:
-                    processed.append(item)
-            # Convert back to the original type (list or tuple)
-            info[key] = processed
+            processed_info[key] = bool(value)
+        else:
+            processed_info[key] = value
 
-    return info
+    return processed_info
