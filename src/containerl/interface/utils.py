@@ -132,7 +132,8 @@ def native_to_numpy_vec(
 def process_info(
     info: dict[
         str,
-        NDArray[np.floating | np.integer]
+        AllowedInfoBaseTypes
+        | NDArray[np.floating | np.integer]
         | np.floating
         | np.integer
         | np.bool_
@@ -148,7 +149,25 @@ def process_info(
             processed_info[key] = value.item()  # .item() converts to native Python type
         elif isinstance(value, np.bool_):
             processed_info[key] = bool(value)
-        else:
+        elif (
+            isinstance(value, str)
+            | isinstance(value, bool)
+            | isinstance(value, int)
+            | isinstance(value, float)
+        ):
             processed_info[key] = value
+        elif isinstance(value, list):
+            # Process lists to convert any numpy types within
+            processed_list: list[AllowedInfoBaseTypes] = []
+            for item in value:
+                if (
+                    isinstance(item, str)
+                    | isinstance(item, bool)
+                    | isinstance(item, int)
+                    | isinstance(item, float)
+                ):
+                    processed_list.append(item)
+
+            processed_info[key] = processed_list
 
     return processed_info

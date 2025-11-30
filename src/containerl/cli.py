@@ -8,7 +8,6 @@ import shutil
 import subprocess
 import sys
 import time
-import uuid
 
 
 def is_valid_docker_image_name(name: str) -> bool:
@@ -77,9 +76,9 @@ def build_docker_image(
     else:
         raise ValueError(f"Path {path} does not exist or is not accessible")
 
-    # Generate random name if not provided
+    # Use fixed default name if not provided (avoids cache bloat from random names)
     if not name:
-        name = f"containerl-{uuid.uuid4().hex[:8]}"
+        name = "containerl-build"
 
     # Use 'latest' as default tag if not provided
     if not tag:
@@ -234,9 +233,9 @@ def run_docker_container(
                 # Detached mode
                 logger.info(f"Starting container in detached mode from image: {image}")
                 logger.info(f"Command: {' '.join(cmd)}")
-                result = subprocess.run(
+                result = subprocess.run(  # noqa: S603
                     cmd, check=False, capture_output=True, text=True
-                )  # noqa: S603
+                )
                 if result.returncode != 0:
                     logger.error(f"Error starting container: {result.stderr}")
                     logger.error(f"Error: {result.stderr}")

@@ -118,22 +118,44 @@ def test_process_info_conversions() -> None:
         | np.floating
         | np.integer
         | np.bool_
+        | AllowedInfoBaseTypes
         | list[AllowedInfoBaseTypes],
     ] = {
         "arr": np.array([1, 2]),
         "num": np.int32(5),
+        "float_num": np.float64(3.14),
         "b": np.bool_(True),
+        "native_str": "hello",
+        "native_bool": True,
+        "native_int": 42,
+        "native_float": 2.71,
         "lst": [2, "test", 3.1, False],
     }
 
     processed = utils.process_info(info.copy())
+    # Test numpy array conversion
     assert processed["arr"] == [1, 2]
+    # Test numpy integer conversion
     assert processed["num"] == 5
+    assert isinstance(processed["num"], int)
+    # Test numpy float conversion
+    assert abs(processed["float_num"] - 3.14) < 1e-6  # type: ignore
+    assert isinstance(processed["float_num"], float)
+    # Test numpy bool conversion
     assert processed["b"] is True
-    # Compare elements individually to avoid float representation issues
-    import math
-
+    assert isinstance(processed["b"], bool)
+    # Test native Python types pass through
+    assert processed["native_str"] == "hello"
+    assert isinstance(processed["native_str"], str)
+    assert processed["native_bool"] is True
+    assert isinstance(processed["native_bool"], bool)
+    assert processed["native_int"] == 42
+    assert isinstance(processed["native_int"], int)
+    assert abs(processed["native_float"] - 2.71) < 1e-6  # type: ignore
+    assert isinstance(processed["native_float"], float)
+    # Test list processing
     lst: list[AllowedInfoBaseTypes] = cast(list[AllowedInfoBaseTypes], processed["lst"])
     assert lst[0] == 2
-    assert math.isclose(float(lst[2]), 3.1, rel_tol=1e-6)
+    assert lst[1] == "test"
+    assert abs(float(lst[2]) - 3.1) < 1e-6
     assert lst[3] is False
