@@ -29,7 +29,7 @@ class AgentClient(CRLAgent):
         self,
         server_address: str,
         timeout: float = 60.0,
-        **init_args: dict[str, Any] | None,
+        **init_args: dict[str, AllowedInfoValueTypes] | None,
     ) -> None:
         # Connect to the gRPC server with timeout
         self.channel = grpc.insecure_channel(server_address)

@@ -114,9 +114,9 @@ def test_native_to_numpy_vec_unsupported_raises() -> None:
 def test_process_info_conversions() -> None:
     info: dict[
         str,
-        NDArray[np.floating | np.integer[Any]]
+        NDArray[np.floating | np.integer]
         | np.floating
-        | np.integer[Any]
+        | np.integer
         | np.bool_
         | list[AllowedInfoBaseTypes],
     ] = {

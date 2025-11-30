@@ -1,14 +1,12 @@
 """Utility functions for converting between Gymnasium spaces and protobuf representations."""
 
-from typing import Any
-
 import numpy as np
 from gymnasium import spaces
 from numpy.typing import NDArray
 
 from .proto_pb2 import Space
 
-AllowedTypes = NDArray[np.floating | np.integer[Any]] | np.integer[Any]
+AllowedTypes = NDArray[np.floating | np.integer] | np.integer
 AllowedSerializableTypes = list[int | float] | int
 AllowedSpaces = spaces.Space[
     AllowedTypes
@@ -78,7 +76,7 @@ def numpy_to_native(obj: AllowedTypes) -> AllowedSerializableTypes:
         space: The Gymnasium space object (Box, Discrete, MultiDiscrete, or MultiBinary)
     """
     # Handle the four base space types
-    if isinstance(obj, type(np.integer[Any])):
+    if isinstance(obj, type(np.integer)):
         return int(obj)
     else:
         return obj.tolist()
@@ -134,9 +132,9 @@ def native_to_numpy_vec(
 def process_info(
     info: dict[
         str,
-        NDArray[np.floating | np.integer[Any]]
+        NDArray[np.floating | np.integer]
         | np.floating
-        | np.integer[Any]
+        | np.integer
         | np.bool_
         | list[AllowedInfoBaseTypes],
     ],

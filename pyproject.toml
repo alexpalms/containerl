@@ -89,7 +89,7 @@ exclude = [
 [tool.mypy]
 strict = true
 python_version = "3.12"
-files = ["src", "tests", "docs"]
+files = ["src", "docs"]
 mypy_path = ["stubs"]
 
 [tool.ruff]

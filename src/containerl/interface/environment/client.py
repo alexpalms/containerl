@@ -42,7 +42,7 @@ class CRLEnvironmentClient:
         server_address: str,
         timeout: float = 60.0,
         render_mode: str | None = None,
-        **init_args: dict[str, Any] | None,
+        **init_args: dict[str, AllowedTypes] | None,
     ) -> None:
         # Connect to the gRPC server with timeout
         self.channel = grpc.insecure_channel(server_address)
@@ -99,7 +99,10 @@ class CRLEnvironmentClient:
         )
 
     def reset(
-        self, *, seed: int | None = None, options: dict[str, Any] | None = None
+        self,
+        *,
+        seed: int | None = None,
+        options: dict[str, AllowedInfoValueTypes] | None = None,
     ) -> tuple[
         dict[str, AllowedTypes],
         dict[str, AllowedInfoValueTypes],
@@ -235,7 +238,10 @@ class CRLGymEnvironmentAdapter(gym.Env[dict[str, AllowedTypes], AllowedTypes]):
         self.init_info = self.client.init_info
 
     def reset(
-        self, *, seed: int | None = None, options: dict[str, Any] | None = None
+        self,
+        *,
+        seed: int | None = None,
+        options: dict[str, AllowedInfoValueTypes] | None = None,
     ) -> tuple[dict[str, AllowedTypes], dict[str, AllowedInfoValueTypes]]:
         """Reset the environment."""
         super().reset(seed=seed)

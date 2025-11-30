@@ -234,7 +234,9 @@ def run_docker_container(
                 # Detached mode
                 logger.info(f"Starting container in detached mode from image: {image}")
                 logger.info(f"Command: {' '.join(cmd)}")
-                result = subprocess.run(cmd, check=False, capture_output=True, text=True)  # noqa: S603
+                result = subprocess.run(
+                    cmd, check=False, capture_output=True, text=True
+                )  # noqa: S603
                 if result.returncode != 0:
                     logger.error(f"Error starting container: {result.stderr}")
                     logger.error(f"Error: {result.stderr}")
@@ -334,7 +336,9 @@ def stop_container(image: str) -> None:
                 # Prefer stopping then removing to allow graceful shutdown
                 subprocess.run([docker_path, "stop", container_id], check=False)  # noqa: S603
                 subprocess.run([docker_path, "rm", "-f", container_id], check=True)  # noqa: S603
-                logger.info(f"Container {container_id} stopped and removed successfully")
+                logger.info(
+                    f"Container {container_id} stopped and removed successfully"
+                )
             except subprocess.CalledProcessError as e:
                 logger.error(f"Failed to stop/remove container {container_id}: {e}")
 
@@ -403,9 +407,15 @@ def build_run(
         # Print environment variable exports for addresses
         if addresses:
             # If agent_mode True, use CONTAINERL_AGENT_ADDRESSES, else CONTAINERL_ENV_ADDRESSES
-            env_var = "CONTAINERL_AGENT_ADDRESSES" if agent_mode else "CONTAINERL_ENV_ADDRESSES"
+            env_var = (
+                "CONTAINERL_AGENT_ADDRESSES"
+                if agent_mode
+                else "CONTAINERL_ENV_ADDRESSES"
+            )
             joined = ",".join(addresses)
-            logger.info("\nYou can export the addresses of the started containers with:")
+            logger.info(
+                "\nYou can export the addresses of the started containers with:"
+            )
             logger.info(f"export {env_var}='{joined}'")
 
         return image, addresses
@@ -483,12 +493,16 @@ def build_run_test(
         # Stop the containers after testing
         logger.info("\n=== Cleaning up: Stopping container(s) ===")
         try:
-            container_ids = subprocess.run(  # noqa: S603
-                [docker_path, "ps", "-q", "--filter", f"ancestor={image}"],
-                capture_output=True,
-                text=True,
-                check=True,
-            ).stdout.strip().split("\n")
+            container_ids = (
+                subprocess.run(  # noqa: S603
+                    [docker_path, "ps", "-q", "--filter", f"ancestor={image}"],
+                    capture_output=True,
+                    text=True,
+                    check=True,
+                )
+                .stdout.strip()
+                .split("\n")
+            )
 
             container_ids = [cid for cid in container_ids if cid]
 
@@ -806,7 +820,7 @@ def main() -> None:
             args.volumes,
             args.entrypoint_args,
             count=args.count,
-            agent_mode=args.agent if hasattr(args, 'agent') else False,
+            agent_mode=args.agent if hasattr(args, "agent") else False,
         )
     elif args.command == "build-run-test":
         build_run_test(
@@ -822,7 +836,7 @@ def main() -> None:
             args.volumes,
             args.entrypoint_args,
             args.agent,
-            count=args.count if hasattr(args, 'count') else 1,
+            count=args.count if hasattr(args, "count") else 1,
         )
     elif args.command == "remove-images":
         remove_containerl_images()
