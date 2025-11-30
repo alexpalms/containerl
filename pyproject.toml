@@ -31,7 +31,6 @@ dependencies = [
 # Added with `uv add --group dev package_name`
 [dependency-groups]
 dev = [
-    "mypy>=1.17.1",
     "pre-commit>=4.3.0",
     "pyright>=1.1.405",
     "pytest>=8.4.2",
@@ -85,12 +84,6 @@ exclude = [
   "examples/anylogic/stock_management/environment/*",
   "examples/anylogic/stock_management/agent/basic_ppo.py",
 ]
-
-[tool.mypy]
-strict = true
-python_version = "3.12"
-files = ["src", "docs"]
-mypy_path = ["stubs"]
 
 [tool.ruff]
 line-length = 88

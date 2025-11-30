@@ -37,7 +37,7 @@ Install for development:
 pip install -e .[dev]
 ```
 
-This installs the `containerl-cli` console script (defined in pyproject.toml) and dev tools (mypy, pytest, ruff, etc.).
+This installs the `containerl-cli` console script (defined in pyproject.toml) and dev tools (pyright, pytest, ruff, etc.).
 
 
 ## Quickstart (CLI)
@@ -117,7 +117,7 @@ Recommendations:
 ## Development workflow
 
 - Format and lint with ruff and pre-commit to keep style consistent.
-- Run static typing with mypy/pyright (project is configured for strict checks).
+- Run static typing with pyright (project is configured for strict checks).
 - Use `examples/` as integration smoke tests for local development.
 
 Common commands:
@@ -130,7 +130,7 @@ pytest tests/unit --cov=containerl
 ruff check src tests
 
 # run type checks
-mypy
+uv run pyright
 ```
 
 
