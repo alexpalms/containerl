@@ -1,14 +1,12 @@
 """Utility functions for converting between Gymnasium spaces and protobuf representations."""
 
-from typing import Any, cast
-
 import numpy as np
 from gymnasium import spaces
 from numpy.typing import NDArray
 
 from .proto_pb2 import Space
 
-AllowedTypes = NDArray[np.floating | np.integer[Any]] | np.integer[Any]
+AllowedTypes = NDArray[np.floating | np.integer] | np.integer
 AllowedSerializableTypes = list[int | float] | int
 AllowedSpaces = spaces.Space[
     AllowedTypes
@@ -78,7 +76,7 @@ def numpy_to_native(obj: AllowedTypes) -> AllowedSerializableTypes:
         space: The Gymnasium space object (Box, Discrete, MultiDiscrete, or MultiBinary)
     """
     # Handle the four base space types
-    if isinstance(obj, type(np.integer[Any])):
+    if isinstance(obj, type(np.integer)):
         return int(obj)
     else:
         return obj.tolist()
@@ -131,29 +129,45 @@ def native_to_numpy_vec(
         raise ValueError(f"Unsupported space type: {type(space)}")
 
 
-def process_info(info: dict[str, Any]) -> dict[str, AllowedInfoValueTypes]:
+def process_info(
+    info: dict[
+        str,
+        AllowedInfoBaseTypes
+        | NDArray[np.floating | np.integer]
+        | np.floating
+        | np.integer
+        | np.bool_
+        | list[AllowedInfoBaseTypes],
+    ],
+) -> dict[str, AllowedInfoValueTypes]:
     """Process the info dictionary to convert numpy types to native Python types."""
+    processed_info: dict[str, AllowedInfoValueTypes] = {}
     for key, value in info.items():
         if isinstance(value, np.ndarray):
-            info[key] = value.tolist()
+            processed_info[key] = value.tolist()
         elif isinstance(value, np.number):  # Catches all numeric types (int, float)
-            info[key] = value.item()  # .item() converts to native Python type
+            processed_info[key] = value.item()  # .item() converts to native Python type
         elif isinstance(value, np.bool_):
-            info[key] = bool(cast(bool, value))
-        elif isinstance(value, (list, tuple)):
-            value = cast(list[AllowedInfoBaseTypes], value)
-            # Process lists and tuples that might contain numpy types
-            processed: list[AllowedInfoValueTypes] = []
+            processed_info[key] = bool(value)
+        elif (
+            isinstance(value, str)
+            | isinstance(value, bool)
+            | isinstance(value, int)
+            | isinstance(value, float)
+        ):
+            processed_info[key] = value
+        elif isinstance(value, list):
+            # Process lists to convert any numpy types within
+            processed_list: list[AllowedInfoBaseTypes] = []
             for item in value:
-                if isinstance(item, np.ndarray):
-                    processed.append(item.tolist())
-                elif isinstance(item, np.integer) or isinstance(item, np.floating):
-                    processed.append(item.item())
-                elif isinstance(item, np.bool_):
-                    processed.append(bool(item))
-                else:
-                    processed.append(item)
-            # Convert back to the original type (list or tuple)
-            info[key] = processed
+                if (
+                    isinstance(item, str)
+                    | isinstance(item, bool)
+                    | isinstance(item, int)
+                    | isinstance(item, float)
+                ):
+                    processed_list.append(item)
 
-    return info
+            processed_info[key] = processed_list
+
+    return processed_info

@@ -5,16 +5,16 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "containerl"
 version = "0.1.0"
-keywords = ["keyword1", "keyword2"]
+keywords = ["reinforcement-learning", "containers", "docker", "gymnasium", "grpc", "rl", "machine-learning"]
 maintainers = [
   { name="Alessandro Palmas", email="alex@artificialtwin.com" },
 ]
 authors = [
   { name="Alessandro Palmas", email="alex@artificialtwin.com" },
 ]
-description = "Add your description here"
+description = "Toolkit to package and deploy reinforcement learning environments and agents inside reproducible containers"
 readme = { file = "README.md", content-type = "text/markdown"}
-license = { text = "MIT" }
+license = { file = "LICENSE" }
 
 requires-python = ">=3.12"
 classifiers = [
@@ -31,7 +31,6 @@ dependencies = [
 # Added with `uv add --group dev package_name`
 [dependency-groups]
 dev = [
-    "mypy>=1.17.1",
     "pre-commit>=4.3.0",
     "pyright>=1.1.405",
     "pytest>=8.4.2",
@@ -40,14 +39,6 @@ dev = [
     "twine>=6.2.0",
     "types-grpcio>=1.0.0.20251009",
     "types-protobuf>=6.32.1.20251105",
-]
-
-docs = [
-    "furo>=2025.7.19",
-    "myst-parser>=4.0.1",
-    "sphinx>=8.2.3",
-    "sphinx-autobuild>=2025.8.25",
-    "sphinx-autodoc-typehints>=3.2.0",
 ]
 examples = [
     "ale-py>=0.11.2",
@@ -64,6 +55,9 @@ Issues = "https://github.com/alexpalms/containerl/issues"
 [tool.setuptools]
 include-package-data = true
 
+[tool.setuptools.packages.find]
+where = ["src"]
+
 [tool.setuptools.package-data]
 containerl = ["py.typed", "data/*"]
 
@@ -71,7 +65,7 @@ containerl = ["py.typed", "data/*"]
 containerl-cli = "containerl.cli:main"
 
 [tool.pyright]
-include = ["src", "examples", "tests", "docs"]
+include = ["src", "examples", "tests"]
 typeCheckingMode = "strict"
 reportUnusedVariable = "error"
 reportMissingImports = "error"
@@ -86,12 +80,6 @@ exclude = [
   "examples/anylogic/stock_management/agent/basic_ppo.py",
 ]
 
-[tool.mypy]
-strict = true
-python_version = "3.12"
-files = ["src", "tests", "docs"]
-mypy_path = ["stubs"]
-
 [tool.ruff]
 line-length = 88
 target-version = "py312"
@@ -99,7 +87,7 @@ exclude = ["src/containerl/interface/proto_pb2*.*"]
 
 [tool.ruff.lint]
 select = [
-  "D", "E", "F", "UP", "I", "B", "N", "S", "A", "C4", "T20"
+  "E", "F", "UP", "I", "B", "N", "S", "A", "C4", "T20"
 ]
 ignore = ["E501", "D107"]
 
@@ -108,8 +96,26 @@ convention = "numpy"
 
 [tool.ruff.lint.per-file-ignores]
 "src/**/__init__.py" = ["D104", "D107"]  # ignore module and __init__ docstrings
+"tests/**" = ["S101"]  # allow asserts in tests
 
 [tool.ruff.format]
 quote-style = "double"
 indent-style = "space"
 line-ending = "lf"
+
+[tool.coverage.run]
+source = ["src"]
+omit = [
+  "src/containerl/interface/proto_pb2.py",
+  "src/containerl/interface/proto_pb2_grpc.py",
+]
+
+[tool.coverage.report]
+exclude_lines = [
+  "pragma: no cover",
+  "def __repr__",
+  "raise AssertionError",
+  "raise NotImplementedError",
+  "if __name__ == .__main__.:",
+  "if TYPE_CHECKING:",
+]

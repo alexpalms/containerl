@@ -29,7 +29,7 @@ class AgentClient(CRLAgent):
         self,
         server_address: str,
         timeout: float = 60.0,
-        **init_args: dict[str, Any] | None,
+        **init_args: dict[str, AllowedInfoValueTypes] | None,
     ) -> None:
         # Connect to the gRPC server with timeout
         self.channel = grpc.insecure_channel(server_address)
@@ -86,24 +86,6 @@ class AgentClient(CRLAgent):
         numpy_action = native_to_numpy(action, self.action_space)
 
         return numpy_action
-
-    def get_action_serve(
-        self, observation: dict[str, AllowedTypes]
-    ) -> AllowedSerializableTypes:
-        """Get an action from the agent."""
-        # Convert numpy arrays to lists for serialization
-        observation_request = ObservationRequest(
-            observation=msgpack.packb(observation, use_bin_type=True)
-        )
-
-        # Call the GetAction method
-        action_response = self.stub.GetAction(observation_request)
-
-        # Deserialize the action
-        action: AllowedSerializableTypes = msgpack.unpackb(
-            action_response.action, raw=False
-        )
-        return action
 
 
 def agent_check(

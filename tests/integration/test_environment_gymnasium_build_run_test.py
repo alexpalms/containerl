@@ -8,6 +8,9 @@ import pytest
 from containerl import environment_check, gym_environment_check
 from containerl.cli import build_run, stop_container
 
+pytestmark = pytest.mark.integration
+
+
 # Define environments and their build configurations
 TEST_CASES = [
     pytest.param(
@@ -63,7 +66,7 @@ def test_build_run_environment(env_folder: str, env_param: dict[str, Any]) -> No
     """Test building, running, and validating a Gymnasium environment build."""
     logger = logging.getLogger(__name__)
     # Run the build_run_test command
-    image = build_run(env_folder)
+    image, _ = build_run(env_folder)
 
     success = False
     try:
@@ -81,6 +84,7 @@ def test_build_run_environment(env_folder: str, env_param: dict[str, Any]) -> No
     except Exception as e:
         logger.error(f"Error testing environment connection: {str(e)}")
 
+    # Ensure container is stopped using the image identifier
     stop_container(image)
 
     assert success, "Environment connection failed"  # noqa: S101

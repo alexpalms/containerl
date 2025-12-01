@@ -39,7 +39,7 @@ class Environment(CRLVecGymEnvironment):
     def reset(
         self, *, seed: int | None = None, options: dict[str, Any] | None = None
     ) -> tuple[
-        dict[str, NDArray[np.floating | np.integer[Any]]],
+        dict[str, NDArray[np.floating | np.integer]],
         list[dict[str, AllowedInfoValueTypes]],
     ]:
         """Reset the environment."""
@@ -47,9 +47,9 @@ class Environment(CRLVecGymEnvironment):
         return self._get_observation(), self._get_info()
 
     def step(
-        self, action: NDArray[np.floating | np.integer[Any]]
+        self, action: NDArray[np.floating | np.integer]
     ) -> tuple[
-        dict[str, NDArray[np.floating | np.integer[Any]]],
+        dict[str, NDArray[np.floating | np.integer]],
         NDArray[np.floating],
         NDArray[np.bool_],
         NDArray[np.bool_],
@@ -77,7 +77,7 @@ class Environment(CRLVecGymEnvironment):
             self._get_info(),
         )
 
-    def _get_observation(self) -> dict[str, NDArray[np.floating | np.integer[Any]]]:
+    def _get_observation(self) -> dict[str, NDArray[np.floating | np.integer]]:
         obs_list: list[dict[str, AllowedTypes]] = [
             self.single_observation_space.sample() for _ in range(self.num_envs)
         ]

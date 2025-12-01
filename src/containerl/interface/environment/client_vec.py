@@ -37,7 +37,7 @@ class CRLVecEnvironmentClient:
         server_address: str,
         timeout: float = 60.0,
         render_mode: str | None = None,
-        **init_args: dict[str, Any] | None,
+        **init_args: dict[str, AllowedTypes] | None,
     ) -> None:
         # Connect to the gRPC server with timeout
         self.channel = grpc.insecure_channel(server_address)
@@ -71,7 +71,7 @@ class CRLVecEnvironmentClient:
 
         # Set up action space
         self.action_space = cast(
-            spaces.Space[NDArray[np.floating | np.integer[Any]]],
+            spaces.Space[NDArray[np.floating | np.integer]],
             native_to_numpy_space(env_init_response.action_space),
         )
 
@@ -97,9 +97,12 @@ class CRLVecEnvironmentClient:
         )
 
     def reset(
-        self, *, seed: int | None = None, options: dict[str, Any] | None = None
+        self,
+        *,
+        seed: int | None = None,
+        options: dict[str, AllowedInfoValueTypes] | None = None,
     ) -> tuple[
-        dict[str, NDArray[np.floating | np.integer[Any]]],
+        dict[str, NDArray[np.floating | np.integer]],
         list[dict[str, AllowedInfoValueTypes]],
     ]:
         """Reset the environment and return the initial observation."""
@@ -128,9 +131,9 @@ class CRLVecEnvironmentClient:
         return numpy_observation, info
 
     def step(
-        self, action: AllowedTypes
+        self, action: NDArray[np.floating | np.integer]
     ) -> tuple[
-        dict[str, NDArray[np.floating | np.integer[Any]]],
+        dict[str, NDArray[np.floating | np.integer]],
         NDArray[np.floating],
         NDArray[np.bool_],
         NDArray[np.bool_],
@@ -211,7 +214,7 @@ class CRLVecEnvironmentClient:
 
     def _get_numpy_observation(
         self, observation: dict[str, list[float | int]]
-    ) -> dict[str, NDArray[np.floating | np.integer[Any]]]:
+    ) -> dict[str, NDArray[np.floating | np.integer]]:
         return {
             key: native_to_numpy_vec(value, self.observation_space[key], self.num_envs)
             for key, value in observation.items()
@@ -239,18 +242,21 @@ class CRLVecGymEnvironmentAdapter(CRLVecGymEnvironment):
         self.init_info = self.client.init_info
 
     def reset(  # type: ignore
-        self, *, seed: int | None = None, options: dict[str, Any] | None = None
+        self,
+        *,
+        seed: int | None = None,
+        options: dict[str, AllowedInfoValueTypes] | None = None,
     ) -> tuple[
-        dict[str, NDArray[np.floating | np.integer[Any]]],
+        dict[str, NDArray[np.floating | np.integer]],
         list[dict[str, AllowedInfoValueTypes]],
     ]:
         """Reset the environment."""
         return self.client.reset(seed=seed, options=options)
 
     def step(  # type: ignore
-        self, action: AllowedTypes
+        self, action: NDArray[np.floating | np.integer]
     ) -> tuple[
-        dict[str, NDArray[np.floating | np.integer[Any]]],
+        dict[str, NDArray[np.floating | np.integer]],
         NDArray[np.floating],
         NDArray[np.bool_],
         NDArray[np.bool_],

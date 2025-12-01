@@ -39,8 +39,8 @@ from ..utils import (
 
 class CRLVecGymEnvironment(
     Env[
-        dict[str, NDArray[np.floating | np.integer[Any]]],
-        NDArray[np.floating | np.integer[Any]],
+        dict[str, NDArray[np.floating | np.integer]],
+        NDArray[np.floating | np.integer],
     ]
 ):
     """Abstract base class for Vectorized Environments."""
@@ -52,7 +52,7 @@ class CRLVecGymEnvironment(
     def reset(  # type: ignore
         self, *, seed: int | None = None, options: dict[str, Any] | None = None
     ) -> tuple[
-        dict[str, NDArray[np.floating | np.integer[Any]]],
+        dict[str, NDArray[np.floating | np.integer]],
         list[dict[str, AllowedInfoValueTypes]],
     ]:
         """Reset the environment."""
@@ -60,9 +60,9 @@ class CRLVecGymEnvironment(
 
     @abstractmethod
     def step(  # type: ignore
-        self, action: NDArray[np.floating | np.integer[Any]]
+        self, action: NDArray[np.floating | np.integer]
     ) -> tuple[
-        dict[str, NDArray[np.floating | np.integer[Any]]],
+        dict[str, NDArray[np.floating | np.integer]],
         NDArray[np.floating],
         NDArray[np.bool_],
         NDArray[np.bool_],
@@ -284,7 +284,7 @@ class VecEnvironmentServicer(
             return Empty()
 
     def _get_serializable_observation(
-        self, observation: dict[str, NDArray[np.floating | np.integer[Any]]]
+        self, observation: dict[str, NDArray[np.floating | np.integer]]
     ) -> dict[str, list[AllowedSerializableTypes]]:
         return {key: value.tolist() for key, value in observation.items()}
 
