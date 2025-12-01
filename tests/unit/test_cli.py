@@ -7,6 +7,7 @@ import subprocess
 import sys
 import time
 from collections.abc import Iterable, Iterator
+from pathlib import Path
 from types import SimpleNamespace
 from typing import Any
 
@@ -23,7 +24,9 @@ def test_is_valid_docker_image_name() -> None:
     assert not cli.is_valid_docker_image_name("not a valid name")
 
 
-def test_build_docker_image_nonverbose_success(tmp_path: Any, monkeypatch: Any) -> None:
+def test_build_docker_image_nonverbose_success(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
     # Create a temporary directory with a Dockerfile
     d = tmp_path
     df = d / "Dockerfile"
@@ -39,7 +42,7 @@ def test_build_docker_image_nonverbose_success(tmp_path: Any, monkeypatch: Any) 
         check: bool = False,
         capture_output: bool = True,
         text: bool = True,
-    ) -> Any:
+    ) -> SimpleNamespace:
         return SimpleNamespace(returncode=0, stderr="", stdout="")
 
     monkeypatch.setattr(subprocess, "run", fake_run)
@@ -50,7 +53,9 @@ def test_build_docker_image_nonverbose_success(tmp_path: Any, monkeypatch: Any) 
     assert image == "myimg:v1"
 
 
-def test_build_docker_image_verbose_streams(monkeypatch: Any, tmp_path: Any) -> None:
+def test_build_docker_image_verbose_streams(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
     # Create Dockerfile
     d = tmp_path
     (d / "Dockerfile").write_text("FROM alpine:3.12\n")
@@ -84,7 +89,9 @@ def test_build_docker_image_verbose_streams(monkeypatch: Any, tmp_path: Any) -> 
     assert img == "vimg:t"
 
 
-def test_run_docker_container_detached_multiple(monkeypatch: Any) -> None:
+def test_run_docker_container_detached_multiple(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
     def _which(name: str) -> str:  # pragma: no cover
         return "/usr/bin/docker"
 
@@ -95,7 +102,7 @@ def test_run_docker_container_detached_multiple(monkeypatch: Any) -> None:
         check: bool = False,
         capture_output: bool = True,
         text: bool = True,
-    ) -> Any:
+    ) -> SimpleNamespace:
         return SimpleNamespace(returncode=0, stderr="", stdout="")
 
     monkeypatch.setattr(subprocess, "run", fake_run)
@@ -113,13 +120,15 @@ def test_run_docker_container_detached_multiple(monkeypatch: Any) -> None:
     assert addresses == ["localhost:50051", "localhost:50052", "localhost:50053"]
 
 
-def test_run_docker_container_interactive_calls_call(monkeypatch: Any) -> None:
+def test_run_docker_container_interactive_calls_call(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
     def _which(name: str) -> str:  # pragma: no cover
         return "/usr/bin/docker"
 
     monkeypatch.setattr(shutil, "which", _which)
 
-    called: dict[str, Any] = {}
+    called: dict[str, Iterable[str]] = {}
 
     def fake_call(cmd: Iterable[str]) -> int:
         called["cmd"] = cmd
@@ -136,7 +145,7 @@ def test_run_docker_container_interactive_calls_call(monkeypatch: Any) -> None:
     assert "cmd" in called
 
 
-def test_stop_container_no_containers(monkeypatch: Any) -> None:
+def test_stop_container_no_containers(monkeypatch: pytest.MonkeyPatch) -> None:
     def _which(name: str) -> str:  # pragma: no cover
         return "/usr/bin/docker"
 
@@ -147,29 +156,33 @@ def test_stop_container_no_containers(monkeypatch: Any) -> None:
         capture_output: bool = True,
         text: bool = True,
         check: bool = True,
-    ) -> Any:
+    ) -> SimpleNamespace:
         # Simulate `docker ps -q --filter ancestor=...` returning empty
         return SimpleNamespace(stdout="\n")
 
     monkeypatch.setattr(subprocess, "run", fake_run)
 
     # Should not raise
-    cli.stop_container("myimg:latest")
+    cli.stop_container(image="myimg:latest")
 
 
-def test_build_run_uses_build_and_run(monkeypatch: Any) -> None:
-    def _sleep(_: Any) -> None:  # pragma: no cover
+def test_build_run_uses_build_and_run(monkeypatch: pytest.MonkeyPatch) -> None:
+    def _sleep(_: float) -> None:  # pragma: no cover
         return None
 
     monkeypatch.setattr(time, "sleep", _sleep)
 
     def _build_docker_image(
-        path: Any, name: Any, tag: Any, verbose: Any, context: Any
+        path: Path,
+        name: str | None,
+        tag: str | None,
+        verbose: bool,
+        context: str | None,
     ) -> str:  # pragma: no cover
         return "img:tag"
 
     def _run_docker_container(
-        *args: Any, **kwargs: Any
+        *args: Any, **kwargs: dict[str, Any]
     ) -> list[str]:  # pragma: no cover
         return ["localhost:50051"]
 
@@ -193,7 +206,7 @@ def test_build_run_uses_build_and_run(monkeypatch: Any) -> None:
     assert addrs == ["localhost:50051"]
 
 
-def test_build_run_test_flow(monkeypatch: Any) -> None:
+def test_build_run_test_flow(monkeypatch: pytest.MonkeyPatch) -> None:
     # Ensure docker exists
     def _which(name: str) -> str:  # pragma: no cover
         return "/usr/bin/docker"
@@ -201,10 +214,14 @@ def test_build_run_test_flow(monkeypatch: Any) -> None:
     monkeypatch.setattr(shutil, "which", _which)
 
     # Patch build_run to avoid building and running
-    def _build_run(*a: Any, **k: Any) -> tuple[str, list[str]]:  # pragma: no cover
+    def _build_run(
+        *args: Any, **kwargs: dict[str, Any]
+    ) -> tuple[str, list[str]]:  # pragma: no cover
         return ("img:tag", ["localhost:50051"])
 
-    def _test_connection(*a: Any, **k: Any) -> None:  # pragma: no cover
+    def _test_connection(
+        *args: Any, **kwargs: dict[str, Any]
+    ) -> None:  # pragma: no cover
         return None
 
     monkeypatch.setattr(cli, "build_run", _build_run)
@@ -217,7 +234,7 @@ def test_build_run_test_flow(monkeypatch: Any) -> None:
         capture_output: bool = True,
         text: bool = True,
         check: bool = True,
-    ) -> Any:
+    ) -> SimpleNamespace:
         return SimpleNamespace(stdout="\n")
 
     monkeypatch.setattr(subprocess, "run", fake_run)
@@ -236,12 +253,11 @@ def test_build_run_test_flow(monkeypatch: Any) -> None:
         volumes=None,
         entrypoint_args=None,
         agent_mode=False,
-        count=1,
     )
 
 
 def test_main_dispatch_build_and_run(
-    monkeypatch: Any, tmp_path: Any, capsys: Any
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path, capsys: pytest.CaptureFixture[str]
 ) -> None:
     # Create tmp Dockerfile
     (tmp_path / "Dockerfile").write_text("FROM alpine:3.12\n")
@@ -254,12 +270,18 @@ def test_main_dispatch_build_and_run(
     called: dict[str, bool] = {}
 
     def _build_docker_image_cb(
-        path: Any, name: Any, tag: Any, verbose: Any, context: Any
+        path: Path,
+        name: str | None,
+        tag: str | None,
+        verbose: bool,
+        context: str | None,
     ) -> str:  # pragma: no cover
         called.update({"build": True})
         return "img:tag"
 
-    def _run_docker_container_cb(*a: Any, **k: Any) -> list[str]:  # pragma: no cover
+    def _run_docker_container_cb(
+        *args: Any, **kwargs: dict[str, Any]
+    ) -> list[str]:  # pragma: no cover
         called.update({"run": True})
         return ["localhost:50051"]
 
@@ -278,3 +300,175 @@ def test_main_dispatch_build_and_run(
     )
     cli.main()
     assert called.get("run") is True
+
+
+def test_default_image_name_constant() -> None:
+    """Test that DEFAULT_IMAGE_NAME constant is defined and used."""
+    assert cli.DEFAULT_IMAGE_NAME == "containerl-build"
+
+
+def test_run_docker_container_rejects_volumes_when_count_gt_1(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Test that volumes are rejected when count > 1."""
+
+    def _which(name: str) -> str:  # pragma: no cover
+        return "/usr/bin/docker"
+
+    monkeypatch.setattr(shutil, "which", _which)
+
+    with pytest.raises(SystemExit):
+        cli.run_docker_container(
+            "myimg:latest",
+            volumes=["/host:/container"],
+            count=2,
+        )
+
+
+def test_run_docker_container_rejects_interactive_when_count_gt_1(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Test that interactive mode is rejected when count > 1."""
+
+    def _which(name: str) -> str:  # pragma: no cover
+        return "/usr/bin/docker"
+
+    monkeypatch.setattr(shutil, "which", _which)
+
+    with pytest.raises(SystemExit):
+        cli.run_docker_container(
+            "myimg:latest",
+            interactive_bash=True,
+            count=2,
+        )
+
+
+def test_run_docker_container_rejects_attach_when_count_gt_1(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Test that attach mode is rejected when count > 1."""
+
+    def _which(name: str) -> str:  # pragma: no cover
+        return "/usr/bin/docker"
+
+    monkeypatch.setattr(shutil, "which", _which)
+
+    with pytest.raises(SystemExit):
+        cli.run_docker_container(
+            "myimg:latest",
+            attach=True,
+            count=2,
+        )
+
+
+def test_stop_container_by_name(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Test stopping containers by name instead of image."""
+
+    def _which(name: str) -> str:  # pragma: no cover
+        return "/usr/bin/docker"
+
+    monkeypatch.setattr(shutil, "which", _which)
+
+    calls: list[list[str]] = []
+
+    def fake_run(
+        cmd: Iterable[str],
+        capture_output: bool = True,
+        text: bool = True,
+        check: bool = True,
+    ) -> SimpleNamespace:
+        cmd_list = list(cmd)
+        calls.append(cmd_list)
+        # Simulate finding a container
+        if "ps" in cmd_list:
+            return SimpleNamespace(stdout="abc123\n")
+        return SimpleNamespace(stdout="", returncode=0)
+
+    monkeypatch.setattr(subprocess, "run", fake_run)
+
+    cli.stop_container(name="my-container")
+
+    # Check that the filter used name instead of ancestor
+    assert any("name=my-container" in str(call) for call in calls)
+
+
+def test_stop_container_requires_image_or_name(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Test that stop_container requires either image or name."""
+
+    def _which(name: str) -> str:  # pragma: no cover
+        return "/usr/bin/docker"
+
+    monkeypatch.setattr(shutil, "which", _which)
+
+    with pytest.raises(SystemExit):
+        cli.stop_container()
+
+
+def test_stop_container_rejects_both_image_and_name(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Test that stop_container rejects both image and name."""
+
+    def _which(name: str) -> str:  # pragma: no cover
+        return "/usr/bin/docker"
+
+    monkeypatch.setattr(shutil, "which", _which)
+
+    with pytest.raises(SystemExit):
+        cli.stop_container(image="myimg:latest", name="my-container")
+
+
+def test_run_docker_container_with_container_name(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Test that container_name adds --name flag to docker command."""
+
+    def _which(name: str) -> str:  # pragma: no cover
+        return "/usr/bin/docker"
+
+    monkeypatch.setattr(shutil, "which", _which)
+
+    calls: list[list[str]] = []
+
+    def fake_run(
+        cmd: Iterable[str],
+        check: bool = False,
+        capture_output: bool = True,
+        text: bool = True,
+    ) -> SimpleNamespace:
+        calls.append(list(cmd))
+        return SimpleNamespace(returncode=0, stderr="", stdout="")
+
+    monkeypatch.setattr(subprocess, "run", fake_run)
+
+    cli.run_docker_container(
+        "myimg:latest",
+        container_name="my-container",
+        port_mapping=False,
+        count=1,
+    )
+
+    # Check that --name flag was added to the command
+    assert len(calls) == 1
+    cmd = calls[0]
+    assert "--name" in cmd
+    name_idx = cmd.index("--name")
+    assert cmd[name_idx + 1] == "my-container"
+
+
+def test_run_docker_container_rejects_container_name_when_count_gt_1(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Test that container_name is rejected when count > 1."""
+
+    def _which(name: str) -> str:  # pragma: no cover
+        return "/usr/bin/docker"
+
+    monkeypatch.setattr(shutil, "which", _which)
+
+    with pytest.raises(SystemExit):
+        cli.run_docker_container(
+            "myimg:latest",
+            container_name="my-container",
+            count=2,
+        )

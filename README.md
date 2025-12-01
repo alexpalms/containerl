@@ -7,7 +7,7 @@ Containerize your RL Environments and Agents
 
 ContaineRL is a CLI-first toolkit to package, run, and test reinforcement-learning (RL) environments and agents inside reproducible containers. It provides a compact Python API and a command-line interface (entry point: `containerl-cli`) to manage environment/agent lifecycles, build artifacts, and integrate with gRPC/msgpack-based interfaces.
 
-_Last updated: 2025-11-28_
+_Last updated: 2025-11-30_
 
 ## Project layout
 
@@ -34,7 +34,7 @@ Install for development:
 - Clone and install editable:
 
 ```bash
-pip install -e .[dev]
+uv sync
 ```
 
 This installs the `containerl-cli` console script (defined in pyproject.toml) and dev tools (pyright, pytest, ruff, etc.).
@@ -45,7 +45,7 @@ This installs the `containerl-cli` console script (defined in pyproject.toml) an
 Show help and global options:
 
 ```bash
-containerl-cli --help
+uv run containerl-cli --help
 ```
 
 Common, supported commands (see `--help` for full options):
@@ -53,34 +53,71 @@ Common, supported commands (see `--help` for full options):
 - Build a Docker image from a directory containing a Dockerfile:
 
 ```bash
-containerl-cli build ./examples/cartpole -n my-image -t v1
+uv run containerl-cli build ./examples/gymnasium/environments/atari/ -n my-image -t v1 [-v]
 ```
 
 - Run a built image (maps container port 50051 to host by default):
 
 ```bash
-containerl-cli run my-image:v1 --host-port 50051 --count 1
+# Run with explicit image name
+uv run containerl-cli run my-image:v1 [-v]
+
+# Run with a custom container name (only when count=1)
+uv run containerl-cli run my-image:v1 --name my-container [-v]
+
+# Run multiple containers (volumes, interactive, attach, and naming only work with count=1)
+uv run containerl-cli run my-image:v1 --count 3
+
+# Run in interactive mode (only when count=1)
+uv run containerl-cli run my-image:v1 -i
+```
+
+- Test connection to a running container:
+
+```bash
+# Test with initialization arguments
+uv run containerl-cli test --address localhost:50051 \
+  --init-arg render_mode="rgb_array" \
+  --init-arg env_name="ALE/Breakout-v5" \
+  --init-arg obs_type="ram"
 ```
 
 - Build an image and run containers from it:
 
 ```bash
-containerl-cli build-run ./examples/cartpole
+uv run containerl-cli build-run ./examples/gymnasium/environments/atari/ [-v]
+
+# With a custom container name
+uv run containerl-cli build-run ./examples/gymnasium/environments/atari/ --container-name my-env [-v]
 ```
 
 - Build, run and test a container (invokes client checks):
 
 ```bash
-containerl-cli build-run-test ./examples/cartpole --address localhost:50051 --steps 5
+# With initialization arguments (supports int, float, bool, and string values)
+uv run containerl-cli build-run-test ./examples/gymnasium/environments/atari/ \
+  --init-arg render_mode="rgb_array" \
+  --init-arg env_name="ALE/Breakout-v5" \
+  --init-arg obs_type="ram"
 ```
 
-- Stop all containers started from a given image:
+- Stop containers by image or by name:
 
 ```bash
-containerl-cli stop my-image:v1
+# Stop all containers started from a given image
+uv run containerl-cli stop --image my-image:v1 [-v]
+
+# Stop container(s) by name
+uv run containerl-cli stop --name my-container [-v]
 ```
 
-The CLI subcommands implemented are: `build`, `run`, `test`, `stop`, `build-run`, `build-run-test`, and `remove-images`. Use `containerl-cli <command> --help` for command-specific flags.
+The CLI subcommands implemented are: `build`, `run`, `test`, `stop`, `build-run`, and `build-run-test`. Use `containerl-cli <command> --help` for command-specific flags.
+
+**Important notes:**
+- The default image name is `containerl-build:latest` (used when no name is specified in `build` or `run` commands)
+- Container naming (`--name` for `run`, `--container-name` for `build-run`/`build-run-test`), volume mounting (`--volume`), interactive mode (`-i`), and attach mode (`-a`) are only available when `--count 1` (the default)
+- The `stop` command requires either `--image` or `--name` but not both
+- Initialization arguments (`--init-arg key=value`) can be passed to `test` and `build-run-test` commands to configure the environment or agent. Multiple init args can be specified, and values are automatically converted to int, float, bool, or string types
 
 
 ## Configuration and Extensibility
