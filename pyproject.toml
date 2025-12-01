@@ -40,14 +40,6 @@ dev = [
     "types-grpcio>=1.0.0.20251009",
     "types-protobuf>=6.32.1.20251105",
 ]
-
-docs = [
-    "furo>=2025.7.19",
-    "myst-parser>=4.0.1",
-    "sphinx>=8.2.3",
-    "sphinx-autobuild>=2025.8.25",
-    "sphinx-autodoc-typehints>=3.2.0",
-]
 examples = [
     "ale-py>=0.11.2",
     "gymnasium==0.29.1",
@@ -70,7 +62,7 @@ containerl = ["py.typed", "data/*"]
 containerl-cli = "containerl.cli:main"
 
 [tool.pyright]
-include = ["src", "examples", "tests", "docs"]
+include = ["src", "examples", "tests"]
 typeCheckingMode = "strict"
 reportUnusedVariable = "error"
 reportMissingImports = "error"

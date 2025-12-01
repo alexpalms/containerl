@@ -66,13 +66,6 @@
         "command": "docker run -it project-name",
         "group": "none",
         "problemMatcher": []
-      },
-      {
-        "label": "Docs Autobuild",
-        "type": "shell",
-        "command": "uv run sphinx-autobuild docs/source/ docs/build/html",
-        "group": "none",
-        "problemMatcher": []
       }
     ]
 }

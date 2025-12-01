@@ -22,7 +22,6 @@ _Last updated: 2025-11-30_
   - unit/              # Fast, isolated unit tests (no external services)
   - integration/       # Slower tests that exercise containers, gRPC, networks
 - examples/            # Example agents and environments
-- docs/                # Sphinx documentation source
 - stubs/               # Type stubs used for strict typing
 
 
