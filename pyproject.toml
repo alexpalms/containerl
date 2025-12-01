@@ -5,16 +5,16 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "containerl"
 version = "0.1.0"
-keywords = ["keyword1", "keyword2"]
+keywords = ["reinforcement-learning", "containers", "docker", "gymnasium", "grpc", "rl", "machine-learning"]
 maintainers = [
   { name="Alessandro Palmas", email="alex@artificialtwin.com" },
 ]
 authors = [
   { name="Alessandro Palmas", email="alex@artificialtwin.com" },
 ]
-description = "Add your description here"
+description = "Toolkit to package and deploy reinforcement learning environments and agents inside reproducible containers"
 readme = { file = "README.md", content-type = "text/markdown"}
-license = { text = "MIT" }
+license = { file = "LICENSE" }
 
 requires-python = ">=3.12"
 classifiers = [
@@ -54,6 +54,9 @@ Issues = "https://github.com/alexpalms/containerl/issues"
 
 [tool.setuptools]
 include-package-data = true
+
+[tool.setuptools.packages.find]
+where = ["src"]
 
 [tool.setuptools.package-data]
 containerl = ["py.typed", "data/*"]

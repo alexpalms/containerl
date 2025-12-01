@@ -5,9 +5,7 @@ Containerize your RL Environments and Agents
 
 ## Overview
 
-ContaineRL is a CLI-first toolkit to package, run, and test reinforcement-learning (RL) environments and agents inside reproducible containers. It provides a compact Python API and a command-line interface (entry point: `containerl-cli`) to manage environment/agent lifecycles, build artifacts, and integrate with gRPC/msgpack-based interfaces.
-
-_Last updated: 2025-11-30_
+ContaineRL is a toolkit to package and deploy reinforcement-learning (RL) environments and agents inside reproducible containers. It provides a compact Python API and a command-line interface (entry point: `containerl-cli`) to manage environment/agent lifecycles, build artifacts, and integrate with gRPC/msgpack-based interfaces.
 
 ## Project layout
 
@@ -15,28 +13,86 @@ _Last updated: 2025-11-30_
   - containerl/ (package)
     - cli.py            # CLI entry point (containerl.cli:main)
     - interface/        # Proto/gRPC bindings and transport abstractions
-    - env/              # Environment adapters and helpers
+    - environment/      # Environment adapters and helpers
     - agent/            # Agent runners and integration code
-    - core/             # Core primitives and shared utilities
 - tests/
   - unit/              # Fast, isolated unit tests (no external services)
   - integration/       # Slower tests that exercise containers, gRPC, networks
 - examples/            # Example agents and environments
-- stubs/               # Type stubs used for strict typing
 
 
 ## Installation
 
 Install for development:
 
-- Python 3.12+ is required.
+- Python 3.12+ is required, [UV](https://docs.astral.sh/uv/) is strongly suggested.
 - Clone and install editable:
 
 ```bash
-uv sync
+uv pip install -e .[dev]
 ```
 
 This installs the `containerl-cli` console script (defined in pyproject.toml) and dev tools (pyright, pytest, ruff, etc.).
+
+
+## Quickstart (Python Package)
+
+ContaineRL provides simple abstractions to expose RL environments and agents as containerized services.
+
+### Exposing an Environment
+
+Wrap your environment class (Gymnasium-compatible) and expose it via gRPC:
+
+```python
+import gymnasium as gym
+from containerl import AllowedTypes, AllowedInfoValueTypes, create_environment_server
+
+class Environment(gym.Env):
+    def __init__(self, render_mode: str, env_name: str):
+        self._env = gym.make(env_name, render_mode=render_mode)
+        self.observation_space = gym.spaces.Dict({"observation": self._env.observation_space})
+        self.action_space = self._env.action_space
+
+    def reset(self, *, seed=None, options=None):
+        obs, info = self._env.reset(seed=seed, options=options)
+        return {"observation": obs}, info
+
+    def step(self, action):
+        obs, reward, terminated, truncated, info = self._env.step(action)
+        return {"observation": obs}, float(reward), terminated, truncated, info
+
+if __name__ == "__main__":
+    create_environment_server(Environment)
+```
+
+Run this script as your Docker container entrypoint. The server listens on port 50051 by default.
+
+### Exposing an Agent
+
+Implement the `CRLAgent` interface and expose it via gRPC:
+
+```python
+import numpy as np
+from gymnasium import spaces
+from containerl import CRLAgent, AllowedTypes, create_agent_server
+
+class Agent(CRLAgent):
+    def __init__(self, target: float, gain: float):
+        self.target = target
+        self.gain = gain
+        self.observation_space = spaces.Dict({"state": spaces.Box(0, 100, shape=(1,))})
+        self.action_space = spaces.Box(0, 10, shape=(1,), dtype=np.float32)
+
+    def get_action(self, observation: dict[str, AllowedTypes]) -> AllowedTypes:
+        return np.clip(self.gain * (self.target - observation["state"]), 0, 10)
+
+if __name__ == "__main__":
+    create_agent_server(Agent)
+```
+
+Both `create_environment_server` and `create_agent_server` handle initialization arguments passed via gRPC, spawn the service, and manage the lifecycle automatically.
+
+See more examples provided with the repository in the [examples/](examples/) directory.
 
 
 ## Quickstart (CLI)
@@ -49,29 +105,29 @@ uv run containerl-cli --help
 
 Common, supported commands (see `--help` for full options):
 
-- Build a Docker image from a directory containing a Dockerfile:
+### Build a Docker image from a directory containing a Dockerfile:
 
 ```bash
-uv run containerl-cli build ./examples/gymnasium/environments/atari/ -n my-image -t v1 [-v]
+uv run containerl-cli build ./examples/gymnasium/environments/atari/ -n my-image -t v1
 ```
 
-- Run a built image (maps container port 50051 to host by default):
+### Run a built image (maps container port 50051 to host by default):
 
 ```bash
 # Run with explicit image name
-uv run containerl-cli run my-image:v1 [-v]
+uv run containerl-cli run my-image:v1
 
 # Run with a custom container name (only when count=1)
-uv run containerl-cli run my-image:v1 --name my-container [-v]
+uv run containerl-cli run my-image:v1 --name my-container
 
-# Run multiple containers (volumes, interactive, attach, and naming only work with count=1)
+# Run multiple containers
 uv run containerl-cli run my-image:v1 --count 3
 
 # Run in interactive mode (only when count=1)
 uv run containerl-cli run my-image:v1 -i
 ```
 
-- Test connection to a running container:
+### Test connection to a running container:
 
 ```bash
 # Test with initialization arguments
@@ -81,16 +137,16 @@ uv run containerl-cli test --address localhost:50051 \
   --init-arg obs_type="ram"
 ```
 
-- Build an image and run containers from it:
+### Build an image and run containers from it:
 
 ```bash
-uv run containerl-cli build-run ./examples/gymnasium/environments/atari/ [-v]
+uv run containerl-cli build-run ./examples/gymnasium/environments/atari/
 
 # With a custom container name
-uv run containerl-cli build-run ./examples/gymnasium/environments/atari/ --container-name my-env [-v]
+uv run containerl-cli build-run ./examples/gymnasium/environments/atari/ --container-name my-env
 ```
 
-- Build, run and test a container (invokes client checks):
+### Build, run and test a container (invokes client checks):
 
 ```bash
 # With initialization arguments (supports int, float, bool, and string values)
@@ -100,14 +156,14 @@ uv run containerl-cli build-run-test ./examples/gymnasium/environments/atari/ \
   --init-arg obs_type="ram"
 ```
 
-- Stop containers by image or by name:
+### Stop containers by image or by name:
 
 ```bash
 # Stop all containers started from a given image
-uv run containerl-cli stop --image my-image:v1 [-v]
+uv run containerl-cli stop --image my-image:v1
 
 # Stop container(s) by name
-uv run containerl-cli stop --name my-container [-v]
+uv run containerl-cli stop --name my-container
 ```
 
 The CLI subcommands implemented are: `build`, `run`, `test`, `stop`, `build-run`, and `build-run-test`. Use `containerl-cli <command> --help` for command-specific flags.
@@ -118,70 +174,21 @@ The CLI subcommands implemented are: `build`, `run`, `test`, `stop`, `build-run`
 - The `stop` command requires either `--image` or `--name` but not both
 - Initialization arguments (`--init-arg key=value`) can be passed to `test` and `build-run-test` commands to configure the environment or agent. Multiple init args can be specified, and values are automatically converted to int, float, bool, or string types
 
-
-## Configuration and Extensibility
-
-- Configuration is read from environment variables and optional YAML/JSON files passed to commands.
-- The interface layer sits between CLI commands and runtime transports (gRPC, local IPC). Implement a new transport by adding an adapter in `src/containerl/interface`.
-- Agents should implement the runtime contract defined in `src/containerl/agent` (see examples for reference).
-
-
 ## Testing strategy (unit vs integration)
 
 The repository separates tests into two folders: `tests/unit/` and `tests/integration/` to speed up the inner development loop and to make CI scheduling simpler.
 
-- Unit tests: fast, deterministic, no network or container dependencies. Run quickly on every commit:
+### Unit tests: fast, deterministic, no network or container dependencies. Run quickly on every commit:
 
 ```bash
 pytest tests/unit
 ```
 
-- Integration tests: exercise containers, gRPC interfaces, or external services. Run them less frequently or in dedicated CI jobs:
+### Integration tests: exercise containers, gRPC interfaces, or external services. Run them less frequently or in dedicated CI jobs:
 
 ```bash
 pytest tests/integration
-# or use a marker if configured
-pytest -m integration
 ```
-
-Recommendations:
-- Keep unit tests focused on pure logic and small adapter behavior.
-- Use pytest markers (e.g., `@pytest.mark.integration`) to tag slow tests and register the marker in `pytest.ini`.
-- In CI, run unit tests on every push and run integration tests in a scheduled pipeline or gated job.
-
-
-## Development workflow
-
-- Format and lint with ruff and pre-commit to keep style consistent.
-- Run static typing with pyright (project is configured for strict checks).
-- Use `examples/` as integration smoke tests for local development.
-
-Common commands:
-
-```bash
-# run unit tests with coverage
-pytest tests/unit --cov=containerl
-
-# run lint
-ruff check src tests
-
-# run type checks
-uv run pyright
-```
-
-
-## Contributing
-
-- Fork the repository and open a branch for your change.
-- Keep changes small and focused; add unit tests for new logic and integration tests when external behavior changes.
-- Run pre-commit and type checks before opening a PR.
-
-
-## Troubleshooting
-
-- If a CLI command fails, re-run with `--debug` or check `~/.containerl/logs` (if present) for runtime traces.
-- For integration issues, ensure local container runtime and network resources are available and that gRPC ports do not conflict.
-
 
 ## License & Contact
 
