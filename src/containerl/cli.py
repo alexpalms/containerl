@@ -428,12 +428,12 @@ def stop_container(image: str | None = None, name: str | None = None) -> None:
         for container_id in container_ids:
             try:
                 logger.info(f"Stopping container {container_id}...")
-                stop_result = subprocess.run(
+                stop_result = subprocess.run(  # noqa: S603
                     [docker_path, "stop", container_id],
                     capture_output=True,
                     text=True,
                     check=False,
-                )  # noqa: S603
+                )
 
                 if stop_result.returncode != 0:
                     logger.warning(
@@ -442,7 +442,7 @@ def stop_container(image: str | None = None, name: str | None = None) -> None:
 
                 # Try to remove the container. It might already be removed if started with --rm
                 logger.info(f"Removing container {container_id}...")
-                rm_result = subprocess.run(
+                rm_result = subprocess.run(  # noqa: S603
                     [docker_path, "rm", "-f", container_id],
                     capture_output=True,
                     text=True,
