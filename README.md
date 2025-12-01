@@ -29,7 +29,7 @@ Install for development:
 - Clone and install editable:
 
 ```bash
-uv pip install -e .[dev]
+uv sync --dev
 ```
 
 This installs the `containerl-cli` console script (defined in pyproject.toml) and dev tools (pyright, pytest, ruff, etc.).
