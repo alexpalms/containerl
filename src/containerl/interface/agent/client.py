@@ -22,7 +22,7 @@ from ..utils import (
 from .server_factory import CRLAgent
 
 
-class AgentClient(CRLAgent):
+class CRLAgentClient(CRLAgent):
     """Client for connecting to a remote agent via gRPC."""
 
     def __init__(
@@ -103,7 +103,7 @@ def agent_check(
     logger = logging.getLogger(__name__)
     try:
         # Create a remote agent
-        agent = AgentClient(
+        agent = CRLAgentClient(
             server_address,
             timeout=60.0,
             **init_args,

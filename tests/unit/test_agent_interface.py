@@ -211,7 +211,9 @@ def test_agent_client_init_and_get_action(monkeypatch: pytest.MonkeyPatch) -> No
     monkeypatch.setattr(client_mod, "AgentServiceStub", FakeStub)
 
     # Initialize client
-    cli: client_mod.AgentClient = client_mod.AgentClient("localhost:1234", timeout=1.0)
+    cli: client_mod.CRLAgentClient = client_mod.CRLAgentClient(
+        "localhost:1234", timeout=1.0
+    )
     # sample observation compatible with observation_space
     obs = cli.observation_space.sample()
     action = cli.get_action(obs)
@@ -239,7 +241,7 @@ def test_agent_client_timeout(monkeypatch: pytest.MonkeyPatch) -> None:
 
     # AgentServiceStub won't be reached; ensure TimeoutError is raised
     with pytest.raises(TimeoutError):
-        client_mod.AgentClient("localhost:1234", timeout=0.01)
+        client_mod.CRLAgentClient("localhost:1234", timeout=0.01)
 
 
 def test_agent_check_success(monkeypatch: pytest.MonkeyPatch) -> None:
@@ -261,6 +263,6 @@ def test_agent_check_success(monkeypatch: pytest.MonkeyPatch) -> None:
         def get_action(self, observation: dict[str, AllowedTypes]) -> np.ndarray:
             return np.array([0.0])
 
-    monkeypatch.setattr(client_mod, "AgentClient", FakeAgent)
+    monkeypatch.setattr(client_mod, "CRLAgentClient", FakeAgent)
     # should run without raising
     client_mod.agent_check("localhost:1234", num_steps=2)

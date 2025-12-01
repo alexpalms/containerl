@@ -1,6 +1,6 @@
 __version__ = "0.1.0"
 from . import cli
-from .interface.agent.client import AgentClient, agent_check
+from .interface.agent.client import CRLAgentClient, agent_check
 from .interface.agent.server_factory import CRLAgent, create_agent_server
 from .interface.environment.client import (
     CRLEnvironmentClient,
@@ -64,7 +64,7 @@ __all__ = [
     "vec_environment_check",
     "environment_check",
     "gym_environment_check",
-    "AgentClient",
+    "CRLAgentClient",
     "agent_check",
     "EnvironmentService",
     "EnvInitRequest",
