@@ -77,8 +77,6 @@ jobs:
 
       - name: Publish with astral UV (PyPI)
         env:
-          # If astral UV needs credentials, provide them via secrets here
-          PYPI_API_TOKEN: ${{ secrets.PYPI_API_TOKEN }}
+          UV_PUBLISH_TOKEN: ${{ secrets.PYPI_API_TOKEN }}
         run: |
-          # Placeholder: run the astral UV publish command (replace with real command)
-          uv publish
+          uv publish --token $UV_PUBLISH_TOKEN
