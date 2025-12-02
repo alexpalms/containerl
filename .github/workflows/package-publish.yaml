@@ -6,6 +6,9 @@ on:
       - 'v*'            # only run on tag pushes; we validate semver below
   workflow_dispatch:    # allow manual runs
 
+permissions:
+  contents: write
+
 jobs:
   publish:
     runs-on: ubuntu-latest
