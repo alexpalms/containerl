@@ -1,3 +1,33 @@
+<!-- <p align="center">
+<a href="https://alexpalms.github.io/projects/02-rl_cuas/"><img src="https://img.shields.io/badge/blog-read%20post-blue" alt="Blog Post"/></a>
+</p> -->
+
+<p align="center">
+<a href="https://github.com/alexpalms/containerl/tags"><img src="https://img.shields.io/github/v/tag/alexpalms/containerl?label=latest%20tag&logo=github" alt="Latest Tag"/></a>
+<a href="https://pypi.org/project/containerl/"><img src="https://img.shields.io/pypi/v/containerl?logo=pypi" alt="Pypi version"/></a>
+</p>
+
+<p align="center">
+<img src="https://img.shields.io/badge/type%20checking-pyright-2A6DB0?logo=python&logoColor=white" alt="Type Hints"/>
+<img src="https://img.shields.io/badge/linting-ruff-4B8BBE?logo=python&logoColor=white" alt="Code Formatting"/>
+<img src="https://img.shields.io/badge/testing-pytest-2A6DB0?logo=python&logoColor=white" alt="Pytest"/>
+</p>
+<p align="center">
+<a href="https://github.com/alexpalms/containerl/actions/workflows/type-hints-check.yaml"><img src="https://img.shields.io/github/actions/workflow/status/alexpalms/containerl/type-hints-check.yaml?label=type%20hints&logo=github" alt="Type Hints"/></a>
+<a href="https://github.com/alexpalms/containerl/actions/workflows/code-formatting-check.yaml"><img src="https://img.shields.io/github/actions/workflow/status/alexpalms/containerl/code-formatting-check.yaml?label=code%20formatting&logo=github" alt="Code Formatting"/></a>
+<a href="https://github.com/alexpalms/containerl/actions/workflows/pytest.yaml"><img src="https://img.shields.io/github/actions/workflow/status/alexpalms/containerl/pytest.yaml?label=pytest&logo=github" alt="Pytest"/></a>
+<a href="https://codecov.io/github/alexpalms/containerl"><img src="https://codecov.io/github/alexpalms/containerl/graph/badge.svg?token=4817P3HFDN" alt="PytestCoverage"/></a>
+</p>
+
+<p align="center">
+<img src="https://img.shields.io/badge/supported%20os-linux/osx/win-blue" alt="Supported OS"/>
+<img src="https://img.shields.io/badge/python-%3E%3D3.12-blue" alt="Python Version"/>
+<img src="https://img.shields.io/github/last-commit/alexpalms/containerl/main?label=repo%20latest%20update&logo=readthedocs" alt="Latest Repo Update"/>
+</p>
+<p align="center">
+<img src="https://img.shields.io/github/license/alexpalms/containerl?cacheBust=1" alt="License"/>
+</p>
+
 # ContaineRL
 
 Containerize your RL Environments and Agents
