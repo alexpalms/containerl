@@ -27,6 +27,7 @@ from ..proto_pb2_grpc import (
     add_EnvironmentServiceServicer_to_server,
 )
 from ..utils import (
+    AllowedInfoValueTypes,
     AllowedSerializableTypes,
     AllowedSpaces,
     AllowedTypes,
@@ -58,7 +59,7 @@ class EnvironmentServer(
         """Initialize the environment and return space information."""
         try:
             # Prepare initialization arguments
-            init_args = {}
+            init_args: dict[str, AllowedInfoValueTypes] = {}
             if request.HasField("init_args"):
                 init_args = msgpack.unpackb(request.init_args, raw=False)
 

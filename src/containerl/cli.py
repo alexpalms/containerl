@@ -8,7 +8,8 @@ import shutil
 import subprocess
 import sys
 import time
-from typing import Any
+
+from .interface.utils import AllowedInfoValueTypes
 
 DEFAULT_IMAGE_NAME = "containerl-build"
 
@@ -318,7 +319,7 @@ def test_connection(
     logger = logging.getLogger(__name__)
 
     # Parse init_args from "key=value" format to dictionary
-    parsed_init_args: dict[str, Any] = {}
+    parsed_init_args: dict[str, AllowedInfoValueTypes] = {}
     if init_args:
         for arg in init_args:
             if "=" not in arg:
@@ -354,7 +355,18 @@ def test_connection(
             logger.info(f"Testing environment connection to {server_address}...")
             if parsed_init_args:
                 logger.info(f"Using init arguments: {parsed_init_args}")
-            environment_check(server_address, num_steps=num_steps, **parsed_init_args)
+
+            # Extract render_mode if present in init_args
+            render_mode = parsed_init_args.pop("render_mode", None)
+            if render_mode is not None and not isinstance(render_mode, str):
+                render_mode = str(render_mode)
+
+            environment_check(
+                server_address,
+                num_steps=num_steps,
+                render_mode=render_mode,
+                **parsed_init_args,
+            )
 
         logger.info(
             f"Successfully connected to the {'agent' if agent_mode else 'environment'} server at {server_address}"

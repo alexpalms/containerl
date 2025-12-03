@@ -94,7 +94,7 @@ class VecEnvironmentServicer(
         """Initialize the environment and return space information."""
         try:
             # Prepare initialization arguments
-            init_args = {}
+            init_args: dict[str, AllowedInfoValueTypes] = {}
             if request.HasField("init_args"):
                 init_args = msgpack.unpackb(request.init_args, raw=False)
 

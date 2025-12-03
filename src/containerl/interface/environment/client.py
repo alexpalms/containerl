@@ -2,7 +2,7 @@
 
 import logging
 import sys
-from typing import Any, SupportsFloat
+from typing import SupportsFloat
 
 import grpc
 import gymnasium as gym
@@ -42,7 +42,7 @@ class CRLEnvironmentClient:
         server_address: str,
         timeout: float = 60.0,
         render_mode: str | None = None,
-        **init_args: dict[str, AllowedTypes] | None,
+        **init_args: AllowedInfoValueTypes | None,
     ) -> None:
         # Connect to the gRPC server with timeout
         self.channel = grpc.insecure_channel(server_address)
@@ -224,7 +224,7 @@ class CRLGymEnvironmentAdapter(gym.Env[dict[str, AllowedTypes], AllowedTypes]):
         server_address: str,
         timeout: float = 60.0,
         render_mode: str | None = None,
-        **init_args: dict[str, Any],
+        **init_args: AllowedInfoValueTypes | None,
     ):
         self.client = CRLEnvironmentClient(
             server_address,
@@ -272,7 +272,7 @@ def environment_check(
     server_address: str = "localhost:50051",
     num_steps: int = 5,
     render_mode: str | None = None,
-    **init_args: dict[str, Any],
+    **init_args: AllowedInfoValueTypes,
 ) -> None:
     """
     Run a simple test of the EnvironmentClient.
@@ -348,7 +348,7 @@ def environment_check(
 def gym_environment_check(
     server_address: str = "localhost:50051",
     render_mode: str | None = None,
-    **init_args: dict[str, Any],
+    **init_args: AllowedInfoValueTypes | None,
 ) -> None:
     """
     Run a Gym Environment check.
