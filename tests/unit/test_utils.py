@@ -1,7 +1,5 @@
 """Unit tests for containerl.interface.utils."""
 
-# from typing import Any, cast
-
 from typing import Any, cast
 
 import numpy as np

@@ -1,13 +1,17 @@
 """Simple DeepRL Agent for Anylogic stock problem."""
 
 import os
-from typing import Any
 
 import numpy as np
 from gymnasium import spaces
 from stable_baselines3 import PPO
 
-from containerl import AllowedTypes, CRLAgent, create_agent_server
+from containerl import (
+    AllowedInfoValueTypes,
+    AllowedTypes,
+    CRLAgent,
+    create_agent_server,
+)
 
 
 class Agent(CRLAgent):
@@ -33,7 +37,10 @@ class Agent(CRLAgent):
 
         self.agent = PPO.load(model_path, device=device)
 
-        self.init_info: dict[str, Any] = {"model_name": model_name, "device": device}
+        self.init_info: dict[str, AllowedInfoValueTypes] = {
+            "model_name": model_name,
+            "device": device,
+        }
 
     def get_action(self, observation: dict[str, AllowedTypes]) -> AllowedTypes:
         """Return the optimal action as calculated by the deepRL model."""

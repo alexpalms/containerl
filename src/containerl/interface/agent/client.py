@@ -1,7 +1,6 @@
 """Client for connecting to a remote agent via gRPC."""
 
 import logging
-from typing import Any
 
 import grpc
 import msgpack
@@ -29,7 +28,7 @@ class CRLAgentClient(CRLAgent):
         self,
         server_address: str,
         timeout: float = 60.0,
-        **init_args: dict[str, AllowedInfoValueTypes] | None,
+        **init_args: AllowedInfoValueTypes | None,
     ) -> None:
         # Connect to the gRPC server with timeout
         self.channel = grpc.insecure_channel(server_address)
@@ -91,7 +90,7 @@ class CRLAgentClient(CRLAgent):
 def agent_check(
     server_address: str = "localhost:50051",
     num_steps: int = 5,
-    **init_args: dict[str, Any] | None,
+    **init_args: AllowedInfoValueTypes,
 ) -> None:
     """
     Run a simple test of the EnvironmentClient.

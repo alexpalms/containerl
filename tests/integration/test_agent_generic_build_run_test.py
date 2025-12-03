@@ -85,8 +85,7 @@ def test_build_run_agent(env_folder: str, env_param: dict[str, Any]) -> None:
 
     success = False
     try:
-        init_args: dict[str, Any] = env_param.get("init_args", {})
-        agent_check(env_param["port"], **init_args)
+        agent_check(env_param["port"], **env_param["init_args"])
         success = True
     except Exception as e:
         logger.error(f"Error testing agent connection: {str(e)}")

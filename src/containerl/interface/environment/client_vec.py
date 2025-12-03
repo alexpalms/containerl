@@ -2,7 +2,7 @@
 
 import logging
 import sys
-from typing import Any, cast
+from typing import cast
 
 import grpc
 import msgpack
@@ -22,7 +22,6 @@ from ..proto_pb2_grpc import EnvironmentServiceStub
 from ..utils import (
     AllowedInfoValueTypes,
     AllowedSpaces,
-    AllowedTypes,
     native_to_numpy_space,
     native_to_numpy_vec,
 )
@@ -37,7 +36,7 @@ class CRLVecEnvironmentClient:
         server_address: str,
         timeout: float = 60.0,
         render_mode: str | None = None,
-        **init_args: dict[str, AllowedTypes] | None,
+        **init_args: AllowedInfoValueTypes | None,
     ) -> None:
         # Connect to the gRPC server with timeout
         self.channel = grpc.insecure_channel(server_address)
@@ -231,7 +230,7 @@ class CRLVecGymEnvironmentAdapter(CRLVecGymEnvironment):
         server_address: str,
         timeout: float = 60.0,
         render_mode: str | None = None,
-        **init_args: Any,
+        **init_args: AllowedInfoValueTypes | None,
     ):
         self.client = CRLVecEnvironmentClient(
             server_address, timeout=timeout, render_mode=render_mode, **init_args
