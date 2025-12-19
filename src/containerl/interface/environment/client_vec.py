@@ -239,6 +239,8 @@ class CRLVecGymEnvironmentAdapter(CRLVecGymEnvironment):
         self.action_space = self.client.action_space
         self.render_mode = self.client.render_mode
         self.init_info = self.client.init_info
+        self.num_envs = self.client.num_envs
+        self.environment_type = self.client.environment_type
 
     def reset(  # type: ignore
         self,
