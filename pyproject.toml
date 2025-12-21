@@ -84,8 +84,8 @@ reportMissingTypeStubs = "error"
 extraPaths = ["stubs"]
 exclude = [
   "src/containerl/interface/proto_pb2*.*",
-  "examples/anylogic/stock_management/environment/*",
-  "examples/anylogic/stock_management/agent/basic_ppo.py",
+  "examples/environments/anylogic/stock_management/*",
+  "examples/agents/anylogic/stock_management/deep_rl/agent.py",
 ]
 
 [tool.ruff]
