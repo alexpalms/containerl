@@ -1,1 +1,3 @@
+swig
+gymnasium[box2d,classic-control,mujoco]
 ale-py
