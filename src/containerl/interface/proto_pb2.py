@@ -19,7 +19,7 @@ _sym_db = _symbol_database.Default()
 
 
 DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(
-    b'\n\x0bproto.proto\x12\ncontainerl"\x07\n\x05\x45mpty")\n\x12ObservationRequest\x12\x13\n\x0bobservation\x18\x01 \x01(\x0c" \n\x0e\x41\x63tionResponse\x12\x0e\n\x06\x61\x63tion\x18\x01 \x01(\x0c"8\n\x10\x41gentInitRequest\x12\x16\n\tinit_args\x18\x01 \x01(\x0cH\x00\x88\x01\x01\x42\x0c\n\n_init_args"`\n\x0e\x45nvInitRequest\x12\x18\n\x0brender_mode\x18\x01 \x01(\tH\x00\x88\x01\x01\x12\x16\n\tinit_args\x18\x02 \x01(\x0cH\x01\x88\x01\x01\x42\x0e\n\x0c_render_modeB\x0c\n\n_init_args"L\n\x0cResetRequest\x12\x11\n\x04seed\x18\x01 \x01(\x03H\x00\x88\x01\x01\x12\x14\n\x07options\x18\x02 \x01(\x0cH\x01\x88\x01\x01\x42\x07\n\x05_seedB\n\n\x08_options"\x1d\n\x0bStepRequest\x12\x0e\n\x06\x61\x63tion\x18\x01 \x01(\x0c"2\n\rResetResponse\x12\x13\n\x0bobservation\x18\x01 \x01(\x0c\x12\x0c\n\x04info\x18\x02 \x01(\x0c"h\n\x0cStepResponse\x12\x13\n\x0bobservation\x18\x01 \x01(\x0c\x12\x0e\n\x06reward\x18\x02 \x01(\x0c\x12\x12\n\nterminated\x18\x03 \x01(\x0c\x12\x11\n\ttruncated\x18\x04 \x01(\x0c\x12\x0c\n\x04info\x18\x05 \x01(\x0c"%\n\x0eRenderResponse\x12\x13\n\x0brender_data\x18\x01 \x01(\x0c"r\n\x05Space\x12\x0c\n\x04type\x18\x01 \x01(\t\x12\x0b\n\x03low\x18\x02 \x03(\x01\x12\x0c\n\x04high\x18\x03 \x03(\x01\x12\x0e\n\x01n\x18\x04 \x01(\x05H\x00\x88\x01\x01\x12\x0c\n\x04nvec\x18\x05 \x03(\x05\x12\r\n\x05shape\x18\x06 \x03(\x05\x12\r\n\x05\x64type\x18\x07 \x01(\tB\x04\n\x02_n"\xc0\x02\n\x0f\x45nvInitResponse\x12L\n\x11observation_space\x18\x01 \x03(\x0b\x32\x31.containerl.EnvInitResponse.ObservationSpaceEntry\x12\'\n\x0c\x61\x63tion_space\x18\x02 \x01(\x0b\x32\x11.containerl.Space\x12\x10\n\x08num_envs\x18\x03 \x01(\x05\x12\x35\n\x10\x65nvironment_type\x18\x04 \x01(\x0e\x32\x1b.containerl.EnvironmentType\x12\x13\n\x0brender_mode\x18\x05 \x01(\t\x12\x0c\n\x04info\x18\x06 \x01(\x0c\x1aJ\n\x15ObservationSpaceEntry\x12\x0b\n\x03key\x18\x01 \x01(\t\x12 \n\x05value\x18\x02 \x01(\x0b\x32\x11.containerl.Space:\x02\x38\x01"\xe6\x01\n\x11\x41gentInitResponse\x12N\n\x11observation_space\x18\x01 \x03(\x0b\x32\x33.containerl.AgentInitResponse.ObservationSpaceEntry\x12\'\n\x0c\x61\x63tion_space\x18\x02 \x01(\x0b\x32\x11.containerl.Space\x12\x0c\n\x04info\x18\x03 \x01(\x0c\x1aJ\n\x15ObservationSpaceEntry\x12\x0b\n\x03key\x18\x01 \x01(\t\x12 \n\x05value\x18\x02 \x01(\x0b\x32\x11.containerl.Space:\x02\x38\x01*/\n\x0f\x45nvironmentType\x12\x0c\n\x08STANDARD\x10\x00\x12\x0e\n\nVECTORIZED\x10\x01\x32\xc0\x02\n\x12\x45nvironmentService\x12\x41\n\x04Init\x12\x1a.containerl.EnvInitRequest\x1a\x1b.containerl.EnvInitResponse"\x00\x12>\n\x05Reset\x12\x18.containerl.ResetRequest\x1a\x19.containerl.ResetResponse"\x00\x12;\n\x04Step\x12\x17.containerl.StepRequest\x1a\x18.containerl.StepResponse"\x00\x12\x39\n\x06Render\x12\x11.containerl.Empty\x1a\x1a.containerl.RenderResponse"\x00\x12/\n\x05\x43lose\x12\x11.containerl.Empty\x1a\x11.containerl.Empty"\x00\x32\xa0\x01\n\x0c\x41gentService\x12\x45\n\x04Init\x12\x1c.containerl.AgentInitRequest\x1a\x1d.containerl.AgentInitResponse"\x00\x12I\n\tGetAction\x12\x1e.containerl.ObservationRequest\x1a\x1a.containerl.ActionResponse"\x00\x62\x06proto3'
+    b'\n\x0bproto.proto\x12\ncontainerl"\x07\n\x05\x45mpty")\n\x12ObservationRequest\x12\x13\n\x0bobservation\x18\x01 \x01(\x0c" \n\x0e\x41\x63tionResponse\x12\x0e\n\x06\x61\x63tion\x18\x01 \x01(\x0c"8\n\x10\x41gentInitRequest\x12\x16\n\tinit_args\x18\x01 \x01(\x0cH\x00\x88\x01\x01\x42\x0c\n\n_init_args"6\n\x0e\x45nvInitRequest\x12\x16\n\tinit_args\x18\x01 \x01(\x0cH\x00\x88\x01\x01\x42\x0c\n\n_init_args"L\n\x0cResetRequest\x12\x11\n\x04seed\x18\x01 \x01(\x03H\x00\x88\x01\x01\x12\x14\n\x07options\x18\x02 \x01(\x0cH\x01\x88\x01\x01\x42\x07\n\x05_seedB\n\n\x08_options"\x1d\n\x0bStepRequest\x12\x0e\n\x06\x61\x63tion\x18\x01 \x01(\x0c"2\n\rResetResponse\x12\x13\n\x0bobservation\x18\x01 \x01(\x0c\x12\x0c\n\x04info\x18\x02 \x01(\x0c"h\n\x0cStepResponse\x12\x13\n\x0bobservation\x18\x01 \x01(\x0c\x12\x0e\n\x06reward\x18\x02 \x01(\x0c\x12\x12\n\nterminated\x18\x03 \x01(\x0c\x12\x11\n\ttruncated\x18\x04 \x01(\x0c\x12\x0c\n\x04info\x18\x05 \x01(\x0c"%\n\x0eRenderResponse\x12\x13\n\x0brender_data\x18\x01 \x01(\x0c"r\n\x05Space\x12\x0c\n\x04type\x18\x01 \x01(\t\x12\x0b\n\x03low\x18\x02 \x03(\x01\x12\x0c\n\x04high\x18\x03 \x03(\x01\x12\x0e\n\x01n\x18\x04 \x01(\x05H\x00\x88\x01\x01\x12\x0c\n\x04nvec\x18\x05 \x03(\x05\x12\r\n\x05shape\x18\x06 \x03(\x05\x12\r\n\x05\x64type\x18\x07 \x01(\tB\x04\n\x02_n"\xc0\x02\n\x0f\x45nvInitResponse\x12L\n\x11observation_space\x18\x01 \x03(\x0b\x32\x31.containerl.EnvInitResponse.ObservationSpaceEntry\x12\'\n\x0c\x61\x63tion_space\x18\x02 \x01(\x0b\x32\x11.containerl.Space\x12\x10\n\x08num_envs\x18\x03 \x01(\x05\x12\x35\n\x10\x65nvironment_type\x18\x04 \x01(\x0e\x32\x1b.containerl.EnvironmentType\x12\x13\n\x0brender_mode\x18\x05 \x01(\t\x12\x0c\n\x04info\x18\x06 \x01(\x0c\x1aJ\n\x15ObservationSpaceEntry\x12\x0b\n\x03key\x18\x01 \x01(\t\x12 \n\x05value\x18\x02 \x01(\x0b\x32\x11.containerl.Space:\x02\x38\x01"\xe6\x01\n\x11\x41gentInitResponse\x12N\n\x11observation_space\x18\x01 \x03(\x0b\x32\x33.containerl.AgentInitResponse.ObservationSpaceEntry\x12\'\n\x0c\x61\x63tion_space\x18\x02 \x01(\x0b\x32\x11.containerl.Space\x12\x0c\n\x04info\x18\x03 \x01(\x0c\x1aJ\n\x15ObservationSpaceEntry\x12\x0b\n\x03key\x18\x01 \x01(\t\x12 \n\x05value\x18\x02 \x01(\x0b\x32\x11.containerl.Space:\x02\x38\x01*/\n\x0f\x45nvironmentType\x12\x0c\n\x08STANDARD\x10\x00\x12\x0e\n\nVECTORIZED\x10\x01\x32\xc0\x02\n\x12\x45nvironmentService\x12\x41\n\x04Init\x12\x1a.containerl.EnvInitRequest\x1a\x1b.containerl.EnvInitResponse"\x00\x12>\n\x05Reset\x12\x18.containerl.ResetRequest\x1a\x19.containerl.ResetResponse"\x00\x12;\n\x04Step\x12\x17.containerl.StepRequest\x1a\x18.containerl.StepResponse"\x00\x12\x39\n\x06Render\x12\x11.containerl.Empty\x1a\x1a.containerl.RenderResponse"\x00\x12/\n\x05\x43lose\x12\x11.containerl.Empty\x1a\x11.containerl.Empty"\x00\x32\xa0\x01\n\x0c\x41gentService\x12\x45\n\x04Init\x12\x1c.containerl.AgentInitRequest\x1a\x1d.containerl.AgentInitResponse"\x00\x12I\n\tGetAction\x12\x1e.containerl.ObservationRequest\x1a\x1a.containerl.ActionResponse"\x00\x62\x06proto3'
 )
 
 _globals = globals()
@@ -31,8 +31,8 @@ if not _descriptor._USE_C_DESCRIPTORS:
     _globals["_ENVINITRESPONSE_OBSERVATIONSPACEENTRY"]._serialized_options = b"8\001"
     _globals["_AGENTINITRESPONSE_OBSERVATIONSPACEENTRY"]._loaded_options = None
     _globals["_AGENTINITRESPONSE_OBSERVATIONSPACEENTRY"]._serialized_options = b"8\001"
-    _globals["_ENVIRONMENTTYPE"]._serialized_start = 1247
-    _globals["_ENVIRONMENTTYPE"]._serialized_end = 1294
+    _globals["_ENVIRONMENTTYPE"]._serialized_start = 1205
+    _globals["_ENVIRONMENTTYPE"]._serialized_end = 1252
     _globals["_EMPTY"]._serialized_start = 27
     _globals["_EMPTY"]._serialized_end = 34
     _globals["_OBSERVATIONREQUEST"]._serialized_start = 36
@@ -42,29 +42,29 @@ if not _descriptor._USE_C_DESCRIPTORS:
     _globals["_AGENTINITREQUEST"]._serialized_start = 113
     _globals["_AGENTINITREQUEST"]._serialized_end = 169
     _globals["_ENVINITREQUEST"]._serialized_start = 171
-    _globals["_ENVINITREQUEST"]._serialized_end = 267
-    _globals["_RESETREQUEST"]._serialized_start = 269
-    _globals["_RESETREQUEST"]._serialized_end = 345
-    _globals["_STEPREQUEST"]._serialized_start = 347
-    _globals["_STEPREQUEST"]._serialized_end = 376
-    _globals["_RESETRESPONSE"]._serialized_start = 378
-    _globals["_RESETRESPONSE"]._serialized_end = 428
-    _globals["_STEPRESPONSE"]._serialized_start = 430
-    _globals["_STEPRESPONSE"]._serialized_end = 534
-    _globals["_RENDERRESPONSE"]._serialized_start = 536
-    _globals["_RENDERRESPONSE"]._serialized_end = 573
-    _globals["_SPACE"]._serialized_start = 575
-    _globals["_SPACE"]._serialized_end = 689
-    _globals["_ENVINITRESPONSE"]._serialized_start = 692
-    _globals["_ENVINITRESPONSE"]._serialized_end = 1012
-    _globals["_ENVINITRESPONSE_OBSERVATIONSPACEENTRY"]._serialized_start = 938
-    _globals["_ENVINITRESPONSE_OBSERVATIONSPACEENTRY"]._serialized_end = 1012
-    _globals["_AGENTINITRESPONSE"]._serialized_start = 1015
-    _globals["_AGENTINITRESPONSE"]._serialized_end = 1245
-    _globals["_AGENTINITRESPONSE_OBSERVATIONSPACEENTRY"]._serialized_start = 938
-    _globals["_AGENTINITRESPONSE_OBSERVATIONSPACEENTRY"]._serialized_end = 1012
-    _globals["_ENVIRONMENTSERVICE"]._serialized_start = 1297
-    _globals["_ENVIRONMENTSERVICE"]._serialized_end = 1617
-    _globals["_AGENTSERVICE"]._serialized_start = 1620
-    _globals["_AGENTSERVICE"]._serialized_end = 1780
+    _globals["_ENVINITREQUEST"]._serialized_end = 225
+    _globals["_RESETREQUEST"]._serialized_start = 227
+    _globals["_RESETREQUEST"]._serialized_end = 303
+    _globals["_STEPREQUEST"]._serialized_start = 305
+    _globals["_STEPREQUEST"]._serialized_end = 334
+    _globals["_RESETRESPONSE"]._serialized_start = 336
+    _globals["_RESETRESPONSE"]._serialized_end = 386
+    _globals["_STEPRESPONSE"]._serialized_start = 388
+    _globals["_STEPRESPONSE"]._serialized_end = 492
+    _globals["_RENDERRESPONSE"]._serialized_start = 494
+    _globals["_RENDERRESPONSE"]._serialized_end = 531
+    _globals["_SPACE"]._serialized_start = 533
+    _globals["_SPACE"]._serialized_end = 647
+    _globals["_ENVINITRESPONSE"]._serialized_start = 650
+    _globals["_ENVINITRESPONSE"]._serialized_end = 970
+    _globals["_ENVINITRESPONSE_OBSERVATIONSPACEENTRY"]._serialized_start = 896
+    _globals["_ENVINITRESPONSE_OBSERVATIONSPACEENTRY"]._serialized_end = 970
+    _globals["_AGENTINITRESPONSE"]._serialized_start = 973
+    _globals["_AGENTINITRESPONSE"]._serialized_end = 1203
+    _globals["_AGENTINITRESPONSE_OBSERVATIONSPACEENTRY"]._serialized_start = 896
+    _globals["_AGENTINITRESPONSE_OBSERVATIONSPACEENTRY"]._serialized_end = 970
+    _globals["_ENVIRONMENTSERVICE"]._serialized_start = 1255
+    _globals["_ENVIRONMENTSERVICE"]._serialized_end = 1575
+    _globals["_AGENTSERVICE"]._serialized_start = 1578
+    _globals["_AGENTSERVICE"]._serialized_end = 1738
 # @@protoc_insertion_point(module_scope)

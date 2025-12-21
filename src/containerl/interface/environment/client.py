@@ -41,7 +41,6 @@ class CRLEnvironmentClient:
         self,
         server_address: str,
         timeout: float = 60.0,
-        render_mode: str | None = None,
         **init_args: AllowedInfoValueTypes | None,
     ) -> None:
         # Connect to the gRPC server with timeout
@@ -59,9 +58,6 @@ class CRLEnvironmentClient:
 
         # Initialize the remote environment
         init_request = EnvInitRequest()
-        if render_mode is not None:
-            init_request.render_mode = render_mode
-
         if init_args:
             init_request.init_args = msgpack.packb(init_args, use_bin_type=True)
 
@@ -223,13 +219,11 @@ class CRLGymEnvironmentAdapter(gym.Env[dict[str, AllowedTypes], AllowedTypes]):
         self,
         server_address: str,
         timeout: float = 60.0,
-        render_mode: str | None = None,
         **init_args: AllowedInfoValueTypes | None,
     ):
         self.client = CRLEnvironmentClient(
             server_address,
             timeout=timeout,
-            render_mode=render_mode,
             **init_args,
         )
         self.observation_space = self.client.observation_space
@@ -273,7 +267,6 @@ class CRLGymEnvironmentAdapter(gym.Env[dict[str, AllowedTypes], AllowedTypes]):
 def environment_check(
     server_address: str = "localhost:50051",
     num_steps: int = 5,
-    render_mode: str | None = None,
     **init_args: AllowedInfoValueTypes,
 ) -> None:
     """
@@ -291,9 +284,7 @@ def environment_check(
     )
     try:
         # Create a remote environment
-        env = CRLEnvironmentClient(
-            server_address, timeout=60, render_mode=render_mode, **init_args
-        )
+        env = CRLEnvironmentClient(server_address, timeout=60, **init_args)
 
         # Reset the environment
         obs, info = env.reset()
@@ -349,7 +340,6 @@ def environment_check(
 
 def gym_environment_check(
     server_address: str = "localhost:50051",
-    render_mode: str | None = None,
     **init_args: AllowedInfoValueTypes | None,
 ) -> None:
     """
@@ -367,9 +357,7 @@ def gym_environment_check(
     )
     try:
         # Create a remote environment
-        env = CRLGymEnvironmentAdapter(
-            server_address, timeout=60, render_mode=render_mode, **init_args
-        )
+        env = CRLGymEnvironmentAdapter(server_address, timeout=60, **init_args)
 
         logger.info("Running Gym environment check without render check...")
         check_env(env, skip_render_check=True)

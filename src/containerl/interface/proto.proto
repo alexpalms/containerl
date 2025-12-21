@@ -35,8 +35,7 @@ message AgentInitRequest {
 }
 
 message EnvInitRequest {
-  optional string render_mode = 1;
-  optional bytes init_args = 2;
+  optional bytes init_args = 1;
 }
 
 message ResetRequest {
