@@ -17,8 +17,8 @@ TEST_CASES = [
         "./examples/gymnasium/environments/classic_control/",
         {
             "port": "localhost:50051",
-            "render_mode": "rgb_array",
             "init_args": {
+                "render_mode": None,
                 "env_name": "CartPole-v1",
             },
         },
@@ -28,8 +28,8 @@ TEST_CASES = [
         "./examples/gymnasium/environments/box2d/",
         {
             "port": "localhost:50051",
-            "render_mode": "rgb_array",
             "init_args": {
+                "render_mode": "rgb_array",
                 "env_name": "LunarLander-v3",
             },
         },
@@ -39,8 +39,8 @@ TEST_CASES = [
         "./examples/gymnasium/environments/mujoco/",
         {
             "port": "localhost:50051",
-            "render_mode": "rgb_array",
             "init_args": {
+                "render_mode": "rgb_array",
                 "env_name": "Ant-v5",
             },
         },
@@ -50,8 +50,8 @@ TEST_CASES = [
         "./examples/gymnasium/environments/atari/",
         {
             "port": "localhost:50051",
-            "render_mode": "rgb_array",
             "init_args": {
+                "render_mode": None,
                 "env_name": "ALE/Breakout-v5",
                 "obs_type": "ram",
             },
@@ -72,12 +72,10 @@ def test_build_run_environment(env_folder: str, env_param: dict[str, Any]) -> No
     try:
         environment_check(
             env_param["port"],
-            render_mode=env_param["render_mode"],
             **env_param["init_args"],
         )
         gym_environment_check(
             env_param["port"],
-            render_mode=env_param["render_mode"],
             **env_param["init_args"],
         )
         success = True

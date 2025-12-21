@@ -63,10 +63,6 @@ class EnvironmentServer(
             if request.HasField("init_args"):
                 init_args = msgpack.unpackb(request.init_args, raw=False)
 
-            # Add render_mode to init_args if provided
-            if request.HasField("render_mode"):
-                init_args["render_mode"] = request.render_mode
-
             # Create the environment with all arguments
             self.env = self.environment_class(**init_args)
 
@@ -91,10 +87,12 @@ class EnvironmentServer(
             numpy_to_native_space(self.env.action_space, response.action_space)
             response.num_envs = self.num_envs
             response.environment_type = self.environment_type
-            render_mode = self.env.render_mode
-            if render_mode is None:
-                render_mode = "None"
-            response.render_mode = render_mode
+
+            if not hasattr(self.env, "render_mode"):
+                raise Exception("Environments must have 'render_mode' attribute.")
+            response.render_mode = (
+                self.env.render_mode if self.env.render_mode is not None else "None"
+            )
 
             info = msgpack.packb(
                 self.env.init_info if hasattr(self.env, "init_info") else {},  # pyright: ignore

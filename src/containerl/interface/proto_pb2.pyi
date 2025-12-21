@@ -40,14 +40,10 @@ class AgentInitRequest(_message.Message):
     def __init__(self, init_args: bytes | None = ...) -> None: ...
 
 class EnvInitRequest(_message.Message):
-    __slots__ = ("render_mode", "init_args")
-    RENDER_MODE_FIELD_NUMBER: _ClassVar[int]
+    __slots__ = ("init_args",)
     INIT_ARGS_FIELD_NUMBER: _ClassVar[int]
-    render_mode: str
     init_args: bytes
-    def __init__(
-        self, render_mode: str | None = ..., init_args: bytes | None = ...
-    ) -> None: ...
+    def __init__(self, init_args: bytes | None = ...) -> None: ...
 
 class ResetRequest(_message.Message):
     __slots__ = ("seed", "options")
@@ -143,7 +139,7 @@ class EnvInitResponse(_message.Message):
         key: str
         value: Space
         def __init__(
-            self, key: str | None = ..., value: Space | _Mapping[str, Space] | None = ...
+            self, key: str | None = ..., value: Space | None = ...
         ) -> None: ...
 
     OBSERVATION_SPACE_FIELD_NUMBER: _ClassVar[int]
@@ -161,7 +157,7 @@ class EnvInitResponse(_message.Message):
     def __init__(
         self,
         observation_space: _Mapping[str, Space] | None = ...,
-        action_space: Space | _Mapping[str, Space] | None = ...,
+        action_space: Space | None = ...,
         num_envs: int | None = ...,
         environment_type: EnvironmentType | str | None = ...,
         render_mode: str | None = ...,
@@ -177,7 +173,7 @@ class AgentInitResponse(_message.Message):
         key: str
         value: Space
         def __init__(
-            self, key: str | None = ..., value: Space | _Mapping[str, Space] | None = ...
+            self, key: str | None = ..., value: Space | None = ...
         ) -> None: ...
 
     OBSERVATION_SPACE_FIELD_NUMBER: _ClassVar[int]
@@ -189,6 +185,6 @@ class AgentInitResponse(_message.Message):
     def __init__(
         self,
         observation_space: _Mapping[str, Space] | None = ...,
-        action_space: Space | _Mapping[str, Space] | None = ...,
+        action_space: Space | None = ...,
         info: bytes | None = ...,
     ) -> None: ...

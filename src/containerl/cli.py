@@ -356,15 +356,9 @@ def test_connection(
             if parsed_init_args:
                 logger.info(f"Using init arguments: {parsed_init_args}")
 
-            # Extract render_mode if present in init_args
-            render_mode = parsed_init_args.pop("render_mode", None)
-            if render_mode is not None and not isinstance(render_mode, str):
-                render_mode = str(render_mode)
-
             environment_check(
                 server_address,
                 num_steps=num_steps,
-                render_mode=render_mode,
                 **parsed_init_args,
             )
 

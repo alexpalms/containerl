@@ -35,7 +35,6 @@ class CRLVecEnvironmentClient:
         self,
         server_address: str,
         timeout: float = 60.0,
-        render_mode: str | None = None,
         **init_args: AllowedInfoValueTypes | None,
     ) -> None:
         # Connect to the gRPC server with timeout
@@ -53,8 +52,6 @@ class CRLVecEnvironmentClient:
 
         # Initialize the remote environment
         init_request = EnvInitRequest()
-        if render_mode is not None:
-            init_request.render_mode = render_mode
 
         if init_args:
             init_request.init_args = msgpack.packb(init_args, use_bin_type=True)
@@ -229,11 +226,10 @@ class CRLVecGymEnvironmentAdapter(CRLVecGymEnvironment):
         self,
         server_address: str,
         timeout: float = 60.0,
-        render_mode: str | None = None,
         **init_args: AllowedInfoValueTypes | None,
     ):
         self.client = CRLVecEnvironmentClient(
-            server_address, timeout=timeout, render_mode=render_mode, **init_args
+            server_address, timeout=timeout, **init_args
         )
         self.observation_space = self.client.observation_space
         self.action_space = self.client.action_space
