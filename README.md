@@ -41,33 +41,44 @@ Containerize your RL Environments and Agents
 
 ContaineRL is a toolkit to package and deploy reinforcement-learning (RL) environments and agents inside reproducible containers. It provides a compact Python API and a command-line interface (entry point: `containerl-cli`) to manage environment/agent lifecycles, build artifacts, and integrate with gRPC/msgpack-based interfaces.
 
-## Project layout
+## Repository Structure
 
-- src/
-  - containerl/ (package)
-    - cli.py            # CLI entry point (containerl.cli:main)
-    - interface/        # Proto/gRPC bindings and transport abstractions
-    - environment/      # Environment adapters and helpers
-    - agent/            # Agent runners and integration code
-- tests/
-  - unit/              # Fast, isolated unit tests (no external services)
-  - integration/       # Slower tests that exercise containers, gRPC, networks
-- examples/            # Example agents and environments
-
+```bash
+containerl/
+├── examples/                 # Example agents and environments
+├── src/
+│   └── containerl/           # (Package root)
+│       ├── interface/        # Proto/gRPC bindings and transport abstractions
+│       │   ├── agent/        # Agent client/server interface
+│       │   └── environment/  # Environment client/server interface
+│       └── cli.py            # CLI entry point (containerl.cli:main)
+└── tests/
+    ├── unit/                 # Fast, isolated unit tests (no external services)
+    └── integration/          # Slower tests that exercise containers, gRPC
+```
 
 ## Installation
 
-Install for development:
+### Official release install
 
-- Python 3.12+ is required, [UV](https://docs.astral.sh/uv/) is strongly suggested.
-- Clone and install editable:
+`uv pip install containerl`
+
+### Installation from source
+
+#### Requiremetns
+
+- Python 3.12+
+- [UV](https://docs.astral.sh/uv/)
+
+
+Clone and install editable:
 
 ```bash
-uv sync --dev
+uv venv
+uv pip install -e .
 ```
 
 This installs the `containerl-cli` console script (defined in pyproject.toml) and dev tools (pyright, pytest, ruff, etc.).
-
 
 ## Quickstart (Python Package)
 
