@@ -2,9 +2,10 @@
     <img src="./img/ContaineRL_cover.jpg" alt="ContaineRL" width="65%"/>
 </p>
 
-<!-- <p align="center">
-<a href="https://alexpalms.github.io/projects/02-rl_cuas/"><img src="https://img.shields.io/badge/blog-read%20post-blue" alt="Blog Post"/></a>
-</p> -->
+<p align="center">
+<a href="https://alexpalms.github.io/projects/04-containerl/"><img src="https://img.shields.io/badge/blog-read%20post-blue" alt="Blog Post"/></a>
+<!-- <a href="https://artificialtwin.com/projects/cuas/"><img src="https://img.shields.io/badge/project-view%20page-gold" alt="Company Project"/></a> -->
+</p>
 
 <p align="center">
 <a href="https://github.com/alexpalms/containerl/tags"><img src="https://img.shields.io/github/v/tag/alexpalms/containerl?label=latest%20tag&logo=github" alt="Latest Tag"/></a>
