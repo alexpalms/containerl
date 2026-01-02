@@ -1,3 +1,7 @@
+<p align="center">
+    <img src="./img/ContaineRL_cover.jpg" alt="ContaineRL" width="65%"/>
+</p>
+
 <!-- <p align="center">
 <a href="https://alexpalms.github.io/projects/02-rl_cuas/"><img src="https://img.shields.io/badge/blog-read%20post-blue" alt="Blog Post"/></a>
 </p> -->
