@@ -76,8 +76,17 @@ Clone and install editable:
 
 ```bash
 uv venv
+```
+
+```bash
 uv pip install -e .
 ```
+or
+```bash
+uv pip install -e . --group dev --group examples
+```
+for additional (dev and examples) deps installation
+
 
 This installs the `containerl-cli` console script (defined in pyproject.toml) and dev tools (pyright, pytest, ruff, etc.).
 
