@@ -30,7 +30,7 @@ class Environment(CRLVecGymEnvironment):
             }
         )
 
-        self.action_space = spaces.Discrete(4)  # pyright: ignore[reportAttributeAccessIssue] # use of Gym.Env base class for VEC envs
+        self.action_space = spaces.Discrete(4)  # pyright:ignore[reportAttributeAccessIssue] # use of Gym.Env base class for VEC envs
 
         self.single_observation_space = self.observation_space
         self.single_action_space = self.action_space

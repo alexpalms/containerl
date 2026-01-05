@@ -95,7 +95,7 @@ class EnvironmentServer(
             )
 
             info = msgpack.packb(
-                self.env.init_info if hasattr(self.env, "init_info") else {},  # pyright: ignore
+                self.env.init_info if hasattr(self.env, "init_info") else {},  # pyright:ignore
                 use_bin_type=True,
             )
             response.info = info
@@ -205,8 +205,8 @@ class EnvironmentServer(
             if isinstance(render_output, np.ndarray) and render_output.ndim == 3:
                 # Create a dict with array metadata and data for proper reconstruction
                 array_data: dict[str, tuple[int, ...] | str | bytes] = {
-                    "shape": render_output.shape,  # pyright: ignore[reportUnknownMemberType]
-                    "dtype": str(render_output.dtype),  # pyright: ignore
+                    "shape": render_output.shape,  # pyright:ignore[reportUnknownMemberType]
+                    "dtype": str(render_output.dtype),  # pyright:ignore
                     "data": render_output.tobytes(),
                 }
                 render_data = msgpack.packb(array_data, use_bin_type=True)

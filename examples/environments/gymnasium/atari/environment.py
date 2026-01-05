@@ -22,7 +22,7 @@ class Environment(gym.Env[dict[str, AllowedTypes], AllowedTypes]):
         # Available Envs: https://ale.farama.org/environments/
         self.render_mode = render_mode
         gym.register_envs(ale_py)
-        self._env: gym.Env[np.ndarray, AllowedTypes] = gym.make(  # pyright: ignore[reportUnknownMemberType]
+        self._env: gym.Env[np.ndarray, AllowedTypes] = gym.make(  # pyright:ignore[reportUnknownMemberType]
             f"{env_name}", render_mode=self.render_mode, obs_type=obs_type
         )
 

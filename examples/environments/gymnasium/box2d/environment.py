@@ -26,7 +26,7 @@ class Environment(gym.Env[dict[str, AllowedTypes], AllowedTypes]):
 
     def __init__(self, render_mode: str, env_name: str) -> None:
         self.render_mode = render_mode
-        self._env: gym.Env[np.ndarray, AllowedTypes] = gym.make(  # pyright: ignore[reportUnknownMemberType]
+        self._env: gym.Env[np.ndarray, AllowedTypes] = gym.make(  # pyright:ignore[reportUnknownMemberType]
             env_name, render_mode=self.render_mode
         )
 

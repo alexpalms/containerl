@@ -31,7 +31,7 @@ def cleanup_all_sims() -> None:
     """Cleanup function to kill all tracked processes."""
     while _active_simulators:
         sim = _active_simulators.pop()
-        for pid in cast(list[int], sim._proc_pids):  # pyright: ignore[reportUnknownMemberType, reportPrivateUsage]
+        for pid in cast(list[int], sim._proc_pids):  # pyright:ignore[reportUnknownMemberType, reportPrivateUsage]
             try:
                 process = psutil.Process(pid)
                 for child in process.children(recursive=True):
@@ -221,7 +221,7 @@ class Environment(AlpyneEnv):
 
         return obs, info
 
-    def step(  # pyright: ignore[reportIncompatibleMethodOverride]
+    def step(  # pyright:ignore[reportIncompatibleMethodOverride]
         self, action: np.ndarray
     ) -> tuple[dict[str, np.ndarray], SupportsFloat, bool, bool, dict[str, Any]]:
         """Step the environment."""
@@ -346,7 +346,7 @@ class Environment(AlpyneEnv):
             adjusted_stock = [s - 1000 for s in self.history["stock"]]
 
             # Plot stock history on left axis (shifted down by 1000)
-            (stock_line,) = self.ax.plot(  # pyright: ignore[reportUnknownMemberType]
+            (stock_line,) = self.ax.plot(  # pyright:ignore[reportUnknownMemberType]
                 self.history["time"],
                 adjusted_stock,
                 "#8be9fd",
@@ -355,7 +355,7 @@ class Environment(AlpyneEnv):
             )
 
             # Plot current order rate on right axis
-            (order_line,) = self.ax2.plot(  # pyright: ignore[reportUnknownMemberType]
+            (order_line,) = self.ax2.plot(  # pyright:ignore[reportUnknownMemberType]
                 self.history["time"],
                 self.history["order_rate"],
                 "#ff79c6",
@@ -368,9 +368,9 @@ class Environment(AlpyneEnv):
                 self.ax.set_xlim(0, max(self.history["time"]))
 
             # Set labels and title
-            self.ax.set_xlabel("Time", color="white", fontweight="bold")  # pyright: ignore[reportUnknownMemberType]
-            self.ax.set_ylabel("Stock", color="#8be9fd", fontweight="bold")  # pyright: ignore[reportUnknownMemberType]
-            self.ax2.set_ylabel(  # pyright: ignore[reportUnknownMemberType]
+            self.ax.set_xlabel("Time", color="white", fontweight="bold")  # pyright:ignore[reportUnknownMemberType]
+            self.ax.set_ylabel("Stock", color="#8be9fd", fontweight="bold")  # pyright:ignore[reportUnknownMemberType]
+            self.ax2.set_ylabel(  # pyright:ignore[reportUnknownMemberType]
                 "Order Rate",
                 color="#ff79c6",
                 fontweight="bold",
@@ -378,7 +378,7 @@ class Environment(AlpyneEnv):
                 labelpad=15,
             )
             self.ax2.yaxis.set_label_position("right")
-            self.fig.suptitle(  # pyright: ignore[reportUnknownMemberType]
+            self.fig.suptitle(  # pyright:ignore[reportUnknownMemberType]
                 "Stock Management Simulation",
                 color="white",
                 fontsize=14,
@@ -386,15 +386,15 @@ class Environment(AlpyneEnv):
             )
 
             # Set colors for the axes
-            self.ax.tick_params(axis="x", colors="white")  # pyright: ignore[reportUnknownMemberType]
-            self.ax.tick_params(axis="y", labelcolor="#8be9fd")  # pyright: ignore[reportUnknownMemberType]
-            self.ax2.tick_params(axis="y", labelcolor="#ff79c6")  # pyright: ignore[reportUnknownMemberType]
+            self.ax.tick_params(axis="x", colors="white")  # pyright:ignore[reportUnknownMemberType]
+            self.ax.tick_params(axis="y", labelcolor="#8be9fd")  # pyright:ignore[reportUnknownMemberType]
+            self.ax2.tick_params(axis="y", labelcolor="#ff79c6")  # pyright:ignore[reportUnknownMemberType]
 
             # Set spines colors
-            for spine in self.ax.spines.values():  # pyright: ignore[reportUnknownMemberType, reportUnknownVariableType]
-                spine.set_color("#555555")  # pyright: ignore[reportUnknownMemberType]
-            for spine in self.ax2.spines.values():  # pyright: ignore[reportUnknownMemberType, reportUnknownVariableType]
-                spine.set_color("#555555")  # pyright: ignore[reportUnknownMemberType]
+            for spine in self.ax.spines.values():  # pyright:ignore[reportUnknownMemberType, reportUnknownVariableType]
+                spine.set_color("#555555")  # pyright:ignore[reportUnknownMemberType]
+            for spine in self.ax2.spines.values():  # pyright:ignore[reportUnknownMemberType, reportUnknownVariableType]
+                spine.set_color("#555555")  # pyright:ignore[reportUnknownMemberType]
 
             # Calculate min/max values for display in annotations
             stock_min = min(self.history["stock"]) if self.history["stock"] else 0
@@ -413,7 +413,7 @@ class Environment(AlpyneEnv):
             self.ax2.set_ylim(-1, 51)  # Fixed range for order rate
 
             # Add text annotations for min/max values (showing adjusted values)
-            self.ax.text(  # pyright: ignore[reportUnknownMemberType]
+            self.ax.text(  # pyright:ignore[reportUnknownMemberType]
                 0.02,
                 0.98,
                 f"Stock Max: {adjusted_stock_max:.1f}",
@@ -422,7 +422,7 @@ class Environment(AlpyneEnv):
                 color="#8be9fd",
                 fontweight="bold",
             )
-            self.ax.text(  # pyright: ignore[reportUnknownMemberType]
+            self.ax.text(  # pyright:ignore[reportUnknownMemberType]
                 0.02,
                 0.94,
                 f"Stock Min: {adjusted_stock_min:.1f}",
@@ -431,7 +431,7 @@ class Environment(AlpyneEnv):
                 color="#8be9fd",
                 fontweight="bold",
             )
-            self.ax2.text(  # pyright: ignore[reportUnknownMemberType]
+            self.ax2.text(  # pyright:ignore[reportUnknownMemberType]
                 0.98,
                 0.98,
                 f"Order Max: {order_max:.1f}",
@@ -441,7 +441,7 @@ class Environment(AlpyneEnv):
                 color="#ff79c6",
                 fontweight="bold",
             )
-            self.ax2.text(  # pyright: ignore[reportUnknownMemberType]
+            self.ax2.text(  # pyright:ignore[reportUnknownMemberType]
                 0.98,
                 0.94,
                 f"Order Min: {order_min:.1f}",
@@ -453,7 +453,7 @@ class Environment(AlpyneEnv):
             )
 
             # Add danger zone labels
-            self.ax.text(  # pyright: ignore[reportUnknownMemberType]
+            self.ax.text(  # pyright:ignore[reportUnknownMemberType]
                 0.98,
                 0.06,
                 "Danger Zone",
@@ -463,7 +463,7 @@ class Environment(AlpyneEnv):
                 color="#ff5555",
                 fontweight="bold",
             )
-            self.ax.text(  # pyright: ignore[reportUnknownMemberType]
+            self.ax.text(  # pyright:ignore[reportUnknownMemberType]
                 0.02,
                 0.90,
                 "Danger Zone",
@@ -474,7 +474,7 @@ class Environment(AlpyneEnv):
             )
 
             # Add target zone label
-            self.ax.text(  # pyright: ignore[reportUnknownMemberType]
+            self.ax.text(  # pyright:ignore[reportUnknownMemberType]
                 0.98,
                 0.50,
                 "Target Zone",
@@ -488,14 +488,14 @@ class Environment(AlpyneEnv):
             # Add legend for both axes
             lines = [stock_line, order_line]
             labels = [line.get_label() for line in lines]
-            legend = self.ax.legend(lines, labels, loc="upper center")  # pyright: ignore[reportUnknownMemberType]
-            legend.get_frame().set_facecolor("#333333")  # pyright: ignore[reportUnknownMemberType]
-            legend.get_frame().set_edgecolor("#555555")  # pyright: ignore[reportUnknownMemberType]
+            legend = self.ax.legend(lines, labels, loc="upper center")  # pyright:ignore[reportUnknownMemberType]
+            legend.get_frame().set_facecolor("#333333")  # pyright:ignore[reportUnknownMemberType]
+            legend.get_frame().set_edgecolor("#555555")  # pyright:ignore[reportUnknownMemberType]
             for text in legend.get_texts():
                 text.set_color("white")
 
             # Add grid for better readability (only on primary axis to avoid clutter)
-            self.ax.grid(True, linestyle="--", alpha=0.3, color="#888888")  # pyright: ignore[reportUnknownMemberType]
+            self.ax.grid(True, linestyle="--", alpha=0.3, color="#888888")  # pyright:ignore[reportUnknownMemberType]
 
             # Make x-axis show integer values only
             self.ax.xaxis.set_major_locator(MaxNLocator(integer=True))
@@ -519,7 +519,7 @@ class Environment(AlpyneEnv):
                 "edgecolor": "#555555",
                 "alpha": 0.8,
             }
-            self.ax.text(  # pyright: ignore[reportUnknownMemberType]
+            self.ax.text(  # pyright:ignore[reportUnknownMemberType]
                 0.02,
                 0.02,
                 status_text,
@@ -534,7 +534,7 @@ class Environment(AlpyneEnv):
 
             if self.render_mode == "human":
                 plt.draw()
-                plt.pause(  # pyright: ignore[reportUnknownMemberType]
+                plt.pause(  # pyright:ignore[reportUnknownMemberType]
                     0.01
                 )  # Small pause to update the plot
                 return None

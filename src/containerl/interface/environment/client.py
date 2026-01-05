@@ -10,7 +10,7 @@ import msgpack
 import numpy as np
 from gymnasium import spaces
 from gymnasium.utils.env_checker import (
-    check_env,  # pyright: ignore[reportUnknownVariableType]
+    check_env,  # pyright:ignore[reportUnknownVariableType]
 )
 from numpy.typing import NDArray
 
