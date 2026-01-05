@@ -65,11 +65,11 @@ class Environment(gym.Env[dict[str, AllowedTypes], AllowedTypes]):
 
     def render(self) -> NDArray[np.uint8]:
         """Render the environment and return an RGB array."""
-        return self._env.render()  # type: ignore
+        return self._env.render()  # pyright:ignore[reportReturnType,reportUnknownVariableType]
 
     def close(self) -> None:
         """Close the environment."""
-        return self._env.close()  # type: ignore
+        return self._env.close()
 
 
 if __name__ == "__main__":

@@ -137,7 +137,7 @@ def test_process_info_conversions() -> None:
     assert processed["num"] == 5
     assert isinstance(processed["num"], int)
     # Test numpy float conversion
-    assert abs(processed["float_num"] - 3.14) < 1e-6  # type: ignore
+    assert abs(processed["float_num"] - 3.14) < 1e-6  # pyright:ignore[reportOperatorIssue,reportUnknownArgumentType]
     assert isinstance(processed["float_num"], float)
     # Test numpy bool conversion
     assert processed["b"] is True
@@ -149,7 +149,7 @@ def test_process_info_conversions() -> None:
     assert isinstance(processed["native_bool"], bool)
     assert processed["native_int"] == 42
     assert isinstance(processed["native_int"], int)
-    assert abs(processed["native_float"] - 2.71) < 1e-6  # type: ignore
+    assert abs(processed["native_float"] - 2.71) < 1e-6  # pyright:ignore[reportOperatorIssue,reportUnknownArgumentType]
     assert isinstance(processed["native_float"], float)
     # Test list processing
     lst: list[AllowedInfoBaseTypes] = cast(list[AllowedInfoBaseTypes], processed["lst"])

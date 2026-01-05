@@ -11,9 +11,9 @@ import matplotlib.patches as patches
 import matplotlib.pyplot as plt
 import numpy as np
 import psutil
-from alpyne.data import SimStatus  # type: ignore
-from alpyne.env import AlpyneEnv  # type: ignore
-from alpyne.sim import AnyLogicSim  # type: ignore
+from alpyne.data import SimStatus
+from alpyne.env import AlpyneEnv
+from alpyne.sim import AnyLogicSim
 from gymnasium import spaces
 from gymnasium.wrappers.normalize import RunningMeanStd
 from matplotlib.backends.backend_agg import FigureCanvasAgg as FigureCanvas
@@ -63,7 +63,7 @@ signal.signal(signal.SIGINT, signal_handler)
 atexit.register(cleanup_all_sims)
 
 
-class Environment(AlpyneEnv):  # type: ignore
+class Environment(AlpyneEnv):
     """
     Custom Gym Environment for the Stock Management Game example model.
 
@@ -132,7 +132,7 @@ class Environment(AlpyneEnv):  # type: ignore
         self._last_action: np.ndarray | None = None
         self._last_rew: SupportsFloat | None = None
 
-        self.return_rms = RunningMeanStd(shape=())  # type: ignore
+        self.return_rms = RunningMeanStd(shape=())
         self.returns = np.zeros(1)
         self.gamma = 0.99
         self.epsilon = 1e-8
@@ -154,13 +154,13 @@ class Environment(AlpyneEnv):  # type: ignore
         return {
             "stock": np.clip(
                 cast(float, status.observation["stock"]),
-                cast(float, self.observation_space["stock"].low),  # type: ignore
-                cast(float, self.observation_space["stock"].high),  # type: ignore
+                cast(float, self.observation_space["stock"].low),
+                cast(float, self.observation_space["stock"].high),
             ),
             "order_rate": np.clip(
                 cast(float, status.observation["order_rate"]),
-                cast(float, self.observation_space["order_rate"].low),  # type: ignore
-                cast(float, self.observation_space["order_rate"].high),  # type: ignore
+                cast(float, self.observation_space["order_rate"].low),
+                cast(float, self.observation_space["order_rate"].high),
             ),
         }
 
@@ -175,14 +175,14 @@ class Environment(AlpyneEnv):  # type: ignore
         return reward
 
     def _normalize_reward(self, rew: SupportsFloat) -> np.ndarray:
-        self.return_rms.update(self.returns)  # type: ignore
+        self.return_rms.update(self.returns)
         normalization_factor = np.sqrt(
-            cast(NDArray[np.floating[Any]], self.return_rms.var) + self.epsilon  # pyright: ignore[ reportUnknownMemberType]
+            cast(NDArray[np.floating[Any]], self.return_rms.var) + self.epsilon
         )
         rew_norm = cast(NDArray[np.floating[Any]], rew / normalization_factor)
         return rew_norm
 
-    def _to_action(self, act: np.ndarray) -> dict[str, float]:  # pyright: ignore[reportIncompatibleMethodOverride]
+    def _to_action(self, act: np.ndarray) -> dict[str, float]:
         return {"order_rate": act[0]}
 
     def _is_truncated(self, status: SimStatus) -> bool:
@@ -273,9 +273,7 @@ class Environment(AlpyneEnv):  # type: ignore
         if self.render_mode in ["human", "rgb_array"]:
             # Create figure and axis if they don't exist
             if self.fig is None or self.ax is None:
-                plt.style.use(  # type: ignore
-                    "dark_background"
-                )  # Use dark background style
+                plt.style.use("dark_background")  # Use dark background style
                 self.fig, self.ax = plt.subplots(figsize=(10, 6))
                 # Create a second y-axis sharing the same x-axis
                 self.ax2 = self.ax.twinx()
@@ -285,9 +283,7 @@ class Environment(AlpyneEnv):  # type: ignore
                     plt.ion()  # Turn on interactive mode
 
                 # Set figure background to dark
-                self.fig.patch.set_facecolor(  # type: ignore
-                    "#1e1e1e"
-                )  # Dark gray background
+                self.fig.patch.set_facecolor("#1e1e1e")  # Dark gray background
                 self.ax.set_facecolor("#2d2d2d")  # Slightly lighter gray for plot area
 
             # Clear the current axes but keep the figure

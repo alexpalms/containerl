@@ -229,7 +229,7 @@ class EnvironmentServer(
         """Close the environment."""
         try:
             if self.env is not None:
-                self.env.close()  # type: ignore
+                self.env.close()
                 self.env = None
             return Empty()
         except Exception as e:

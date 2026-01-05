@@ -79,7 +79,7 @@ def test_agent_servicer_init_success() -> None:
 def test_agent_servicer_init_bad_obs_space_sets_error() -> None:
     class BadAgent(sf_mod.CRLAgent):
         def __init__(self, **kwargs: dict[str, AllowedInfoValueTypes]) -> None:
-            self.observation_space = spaces.Box(  # type: ignore
+            self.observation_space = spaces.Box(  # pyright:ignore[reportAttributeAccessIssue]
                 low=0, high=1, shape=(1,), dtype=np.float32
             )
             self.action_space = spaces.Discrete(2)
@@ -151,7 +151,7 @@ def test_get_action_success_and_error() -> None:
     def bad_action(_: dict[str, AllowedTypes]) -> None:
         raise RuntimeError("boom")
 
-    servicer.agent.get_action = bad_action  # type: ignore[assignment]
+    servicer.agent.get_action = bad_action  # pyright:ignore[reportAttributeAccessIssue]
     ctx2 = DummyContext()
     req2 = cast(ObservationRequest, Req())
     servicer.GetAction(req2, cast(grpc.ServicerContext, ctx2))

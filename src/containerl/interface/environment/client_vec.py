@@ -238,7 +238,7 @@ class CRLVecGymEnvironmentAdapter(CRLVecGymEnvironment):
         self.num_envs = self.client.num_envs
         self.environment_type = self.client.environment_type
 
-    def reset(  # type: ignore
+    def reset(
         self,
         *,
         seed: int | None = None,
@@ -250,7 +250,7 @@ class CRLVecGymEnvironmentAdapter(CRLVecGymEnvironment):
         """Reset the environment."""
         return self.client.reset(seed=seed, options=options)
 
-    def step(  # type: ignore
+    def step(
         self, action: NDArray[np.floating | np.integer]
     ) -> tuple[
         dict[str, NDArray[np.floating | np.integer]],
@@ -262,7 +262,7 @@ class CRLVecGymEnvironmentAdapter(CRLVecGymEnvironment):
         """Take a step in the environment."""
         return self.client.step(action)
 
-    def render(self) -> NDArray[np.uint8] | None:  # type: ignore
+    def render(self) -> NDArray[np.uint8] | None:
         """Render the environment."""
         return self.client.render()
 

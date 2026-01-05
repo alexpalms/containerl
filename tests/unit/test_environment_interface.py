@@ -74,7 +74,7 @@ def test_environment_servicer_init_success() -> None:
         ]:
             return ({"obs": np.array([0.0], dtype=np.float32)}, 0.0, False, False, {})
 
-        def render(self) -> NDArray[np.uint8] | None:  # type: ignore
+        def render(self) -> NDArray[np.uint8] | None:
             return None
 
         def close(self) -> None:  # pragma: no cover
@@ -107,7 +107,7 @@ def test_environment_servicer_init_success() -> None:
 def test_environment_servicer_init_bad_obs_space_sets_error() -> None:
     class BadEnv(Env[dict[str, AllowedTypes], AllowedTypes]):  # simple stand-in for Env
         def __init__(self, **kwargs: dict[str, AllowedInfoValueTypes]) -> None:
-            self.observation_space = spaces.Box(low=0, high=1, shape=(1,))  # type: ignore
+            self.observation_space = spaces.Box(low=0, high=1, shape=(1,))  # pyright:ignore[reportAttributeAccessIssue]
             self.action_space = spaces.Discrete(2)
 
         def reset(
@@ -163,7 +163,7 @@ def test_reset_and_step_precondition_and_success() -> None:
         ]:
             return ({"obs": np.array([0.0], dtype=np.float32)}, 0.1, True, False, {})
 
-        def render(self) -> NDArray[np.uint8] | None:  # type: ignore
+        def render(self) -> NDArray[np.uint8] | None:
             return None
 
     servicer = sf_mod.EnvironmentServer(SimpleEnv)
@@ -242,7 +242,7 @@ def test_render_and_close() -> None:
         ]:
             return ({"obs": np.array([0.0], dtype=np.float32)}, 0.0, False, False, {})
 
-        def render(self) -> NDArray[np.uint8]:  # type: ignore
+        def render(self) -> NDArray[np.uint8]:
             # return a 3D numpy array (H,W,3)
             return np.zeros((2, 2, 3), dtype=np.uint8)
 
@@ -424,7 +424,7 @@ def test_vectorized_servicer_and_client(monkeypatch: pytest.MonkeyPatch) -> None
             info: list[dict[str, AllowedInfoValueTypes]] = [{}, {}]
             return (obs, reward, terminated, truncated, info)
 
-        def render(self) -> NDArray[np.uint8] | None:  # type: ignore
+        def render(self) -> NDArray[np.uint8] | None:
             return None
 
         def close(self) -> None:  # pragma: no cover

@@ -49,7 +49,7 @@ class CRLVecGymEnvironment(
     init_info: dict[str, AllowedInfoValueTypes] | None
 
     @abstractmethod
-    def reset(  # type: ignore
+    def reset(  # pyright:ignore[reportIncompatibleMethodOverride]
         self, *, seed: int | None = None, options: dict[str, Any] | None = None
     ) -> tuple[
         dict[str, NDArray[np.floating | np.integer]],
@@ -59,7 +59,7 @@ class CRLVecGymEnvironment(
         raise NotImplementedError
 
     @abstractmethod
-    def step(  # type: ignore
+    def step(  # pyright:ignore[reportIncompatibleMethodOverride]
         self, action: NDArray[np.floating | np.integer]
     ) -> tuple[
         dict[str, NDArray[np.floating | np.integer]],
@@ -271,7 +271,7 @@ class VecEnvironmentServicer(
         """Close the environment."""
         try:
             if self.env is not None:
-                self.env.close()  # type: ignore
+                self.env.close()
                 self.env = None
             return Empty()
         except Exception as e:
