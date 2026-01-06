@@ -20,11 +20,8 @@ jobs:
         with:
           version: "latest"
 
-      - name: Create venv
-        run: uv venv
-
       - name: Install package
-        run: uv pip install -e . --group dev
+        run: uv sync
 
       - name: Run unit tests (coverage)
         run: uv run pytest tests/unit --cov=containerl --cov-report=term-missing --cov-report=xml -q
@@ -47,11 +44,8 @@ jobs:
         with:
           version: "latest"
 
-      - name: Create venv
-        run: uv venv
-
       - name: Install package
-        run: uv pip install -e . --group dev
+        run: uv sync
 
       - name: Run integration tests (coverage)
         run: uv run pytest tests/integration -m integration --cov=containerl --cov-report=term-missing --cov-report=xml -q

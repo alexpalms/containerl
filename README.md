@@ -13,14 +13,8 @@
 </p>
 
 <p align="center">
-<img src="https://img.shields.io/badge/type%20checking-pyright-2A6DB0?logo=python&logoColor=white" alt="Type Hints"/>
-<img src="https://img.shields.io/badge/linting-ruff-4B8BBE?logo=python&logoColor=white" alt="Code Formatting"/>
-<img src="https://img.shields.io/badge/testing-pytest-2A6DB0?logo=python&logoColor=white" alt="Pytest"/>
-</p>
-<p align="center">
-<a href="https://github.com/alexpalms/containerl/actions/workflows/type-hints-check.yaml"><img src="https://img.shields.io/github/actions/workflow/status/alexpalms/containerl/type-hints-check.yaml?label=type%20hints&logo=github" alt="Type Hints"/></a>
-<a href="https://github.com/alexpalms/containerl/actions/workflows/code-formatting-check.yaml"><img src="https://img.shields.io/github/actions/workflow/status/alexpalms/containerl/code-formatting-check.yaml?label=code%20formatting&logo=github" alt="Code Formatting"/></a>
-<a href="https://github.com/alexpalms/containerl/actions/workflows/pytest.yaml"><img src="https://img.shields.io/github/actions/workflow/status/alexpalms/containerl/pytest.yaml?label=pytest&logo=github" alt="Pytest"/></a>
+<a href="https://github.com/alexpalms/containerl/actions/workflows/code-checks.yaml"><img src="https://img.shields.io/github/actions/workflow/status/alexpalms/containerl/code-checks.yaml?label=code%20checks%20(ruff%20%26%20pyright)&logo=github" alt="Code Checks"/></a>
+<a href="https://github.com/alexpalms/containerl/actions/workflows/pytest.yaml"><img src="https://img.shields.io/github/actions/workflow/status/alexpalms/containerl/pytest.yaml?label=tests%20(pytest)&logo=github" alt="Pytest"/></a>
 <a href="https://codecov.io/github/alexpalms/containerl"><img src="https://codecov.io/github/alexpalms/containerl/graph/badge.svg?token=4817P3HFDN" alt="PytestCoverage"/></a>
 </p>
 
@@ -66,29 +60,19 @@ containerl/
 
 ### Installation from source
 
-#### Requiremetns
+#### Requirements
 
-- Python 3.12+
 - [UV](https://docs.astral.sh/uv/)
 
-
-Clone and install editable:
-
-```bash
-uv venv
-```
+Clone repo and install it:
 
 ```bash
-uv pip install -e .
+uv sync
+# OR
+uv sync --group examples # for examples dependencies
 ```
-or
-```bash
-uv pip install -e . --group dev --group examples
-```
-for additional (dev and examples) deps installation
 
-
-This installs the `containerl-cli` console script (defined in pyproject.toml) and dev tools (pyright, pytest, ruff, etc.).
+This installs the `containerl-cli` console script (defined in `pyproject.toml`) and dev tools (pyright, pytest, ruff, etc.).
 
 ## Quickstart (Python Package)
 
